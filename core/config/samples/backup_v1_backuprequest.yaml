@@ -1,0 +1,12 @@
+apiVersion: backup.oiler.backup/v1
+kind: BackupRequest
+metadata:
+  labels:
+    app.kubernetes.io/name: oiler-backup
+    app.kubernetes.io/managed-by: kustomize
+  name: backuprequest-sample
+spec:
+  dbUri: "1234"
+  databaseType: "postgres"
+  schedule: "1 2 3 4"
+  storageClass: "s3"

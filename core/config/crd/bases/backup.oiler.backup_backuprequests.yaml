@@ -1,0 +1,71 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.16.4
+  name: backuprequests.backup.oiler.backup
+spec:
+  group: backup.oiler.backup
+  names:
+    kind: BackupRequest
+    listKind: BackupRequestList
+    plural: backuprequests
+    shortNames:
+    - br
+    singular: backuprequest
+  scope: Cluster
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: BackupRequest is the Schema for the backuprequests API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: BackupRequestSpec defines the desired state of BackupRequest.
+            properties:
+              databaseType:
+                type: string
+              dbUri:
+                type: string
+              schedule:
+                type: string
+              storageClass:
+                type: string
+            required:
+            - databaseType
+            - dbUri
+            - schedule
+            - storageClass
+            type: object
+          status:
+            description: BackupRequestStatus defines the observed state of BackupRequest.
+            properties:
+              lastBackupTime:
+                format: date-time
+                type: string
+              status:
+                type: string
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
