@@ -22,12 +22,18 @@ import (
 
 // BackupRequestSpec defines the desired state of BackupRequest.
 type BackupRequestSpec struct {
-	DatabaseURI string `json:"dbUri"`
-
+	DatabaseURI  string `json:"dbUri"`
+	DatabasePort int    `json:"databasePort"`
+	DatabaseUser string `json:"databaseUser"`
+	DatabasePass string `json:"databasePass"`
+	DatabaseName string `json:"databaseName"`
 	DatabaseType string `json:"databaseType"`
 
-	Schedule string `json:"schedule"`
-
+	Schedule     string `json:"schedule"`
+	S3Endpoint   string `json:"s3Endpoint"`
+	S3AccessKey  string `json:"s3AccessKey"`
+	S3SecretKey  string `json:"s3SecretKey"`
+	S3BucketName string `json:"s3BucketName"`
 	StorageClass string `json:"storageClass"`
 }
 

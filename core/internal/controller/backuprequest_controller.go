@@ -18,16 +18,25 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"google.golang.org/grpc"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	backupv1 "github.com/AntonShadrinNN/oiler-backup/api/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+var (
+	ErrNotSupported  = func(name string) error { return fmt.Errorf("Database %s is not supported", name) }
+	ErrAlreadyExists = fmt.Errorf("CronJob %s already exists")
 )
 
 // BackupRequestReconciler reconciles a BackupRequest object
@@ -53,16 +62,9 @@ func (r *BackupRequestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	controllerAddress, exists := r.DatabaseControllers[backupRequest.Spec.DatabaseType]
-	if !exists {
-		log.Info(fmt.Sprintf("Database type %s is not supported", backupRequest.Spec.DatabaseType))
+	if backupRequest.Status.Status == "In Progress" {
+		log.Info("BackupRequest %s is already in progress, skipping...", "name", backupRequest.Name)
 		return ctrl.Result{}, nil
-	}
-
-	err := r.delegateToController(ctx, controllerAddress, &backupRequest)
-	if err != nil {
-		log.Error(err, "Cannot delegate to controller")
-		return ctrl.Result{}, err
 	}
 
 	backupRequest.Status.Status = "In Progress"
@@ -70,31 +72,91 @@ func (r *BackupRequestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		log.Error(err, "Unable to update BackupRequest status")
 		return ctrl.Result{}, err
 	}
+	controllerAddress, exists := r.DatabaseControllers[backupRequest.Spec.DatabaseType]
+	if !exists {
+		err := ErrNotSupported(backupRequest.Spec.DatabaseType)
+		log.Error(err, "Make sure to update database-config cm")
+		return ctrl.Result{}, err
+	}
 
+	cronJob, err := r.delegateToController(ctx, controllerAddress, &backupRequest)
+	if errors.Is(err, ErrAlreadyExists) {
+		log.Info("CronJob for BackupRequest %s already exists", "name", backupRequest.Name)
+		return ctrl.Result{}, nil
+	}
+	if err != nil {
+		log.Error(err, "Cannot delegate to controller")
+		return ctrl.Result{}, err
+	}
+
+	cronJob.OwnerReferences = append(cronJob.OwnerReferences, metav1.OwnerReference{
+		APIVersion:         backupRequest.APIVersion,
+		Kind:               backupRequest.Kind,
+		Name:               backupRequest.Name,
+		UID:                backupRequest.UID,
+		BlockOwnerDeletion: func() *bool { b := true; return &b }(),
+	})
+
+	if err := r.Update(ctx, cronJob); err != nil {
+		log.Error(err, "Failed to update cronJob")
+		return ctrl.Result{}, err
+	}
+
+	log.Info("Successfully updated owner references")
+
+	backupRequest.Status.Status = "Success"
+	if err := r.Status().Update(ctx, &backupRequest); err != nil {
+		log.Error(err, "Unable to update BackupRequest status")
+		return ctrl.Result{}, err
+	}
 	return ctrl.Result{}, nil
 }
 
-func (r *BackupRequestReconciler) delegateToController(ctx context.Context, controllerAddress string, backupRequest *backupv1.BackupRequest) error {
+func (r *BackupRequestReconciler) delegateToController(ctx context.Context, controllerAddress string, backupRequest *backupv1.BackupRequest) (*batchv1.CronJob, error) {
 	conn, err := grpc.Dial(controllerAddress, grpc.WithInsecure())
 	if err != nil {
-		return fmt.Errorf("Failed to connect to %s: %w", controllerAddress, err)
+		return nil, fmt.Errorf("Failed to connect to %s: %w", controllerAddress, err)
 	}
 	defer conn.Close()
 
 	client := NewBackupServiceClient(conn)
 
 	req := &BackupRequest{
-		DatabaseFqdn:    backupRequest.Spec.DatabaseURI,
-		StorageLocation: backupRequest.Spec.StorageClass,
+		DbUri:        backupRequest.Spec.DatabaseURI,
+		DbPort:       int64(backupRequest.Spec.DatabasePort),
+		DbUser:       backupRequest.Spec.DatabaseUser,
+		DbPass:       backupRequest.Spec.DatabasePass,
+		DbName:       backupRequest.Spec.DatabaseName,
+		DatabaseType: backupRequest.Spec.DatabaseType,
+		Schedule:     backupRequest.Spec.Schedule,
+		StorageClass: backupRequest.Spec.StorageClass,
+		S3Endpoint:   backupRequest.Spec.S3Endpoint,
+		S3AccessKey:  backupRequest.Spec.S3AccessKey,
+		S3SecretKey:  backupRequest.Spec.S3SecretKey,
+		S3BucketName: backupRequest.Spec.S3BucketName,
 	}
 
 	resp, err := client.Backup(ctx, req)
 	if err != nil {
-		return fmt.Errorf("Failed to invoke backup method %s: %w", controllerAddress, err)
+		return nil, fmt.Errorf("Failed to invoke backup method %s: %w", controllerAddress, err)
+	}
+	if resp.Status == "Exists" {
+		return nil, ErrAlreadyExists
 	}
 
 	log.FromContext(ctx).Info(resp.String())
-	return nil
+
+	name := types.NamespacedName{
+		Namespace: resp.CronjobNamespace,
+		Name:      resp.CronjobName,
+	}
+	var cronJob batchv1.CronJob
+	err = r.Get(ctx, name, &cronJob)
+	if err != nil {
+		return nil, err
+	}
+
+	return &cronJob, nil
 }
 
 func (r *BackupRequestReconciler) loadDatabaseConfig(ctx context.Context, namespace string) error {
