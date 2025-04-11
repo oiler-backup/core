@@ -41,17 +41,41 @@ spec:
           spec:
             description: BackupRequestSpec defines the desired state of BackupRequest.
             properties:
+              databaseName:
+                type: string
+              databasePass:
+                type: string
+              databasePort:
+                type: integer
               databaseType:
                 type: string
+              databaseUser:
+                type: string
               dbUri:
+                type: string
+              s3AccessKey:
+                type: string
+              s3BucketName:
+                type: string
+              s3Endpoint:
+                type: string
+              s3SecretKey:
                 type: string
               schedule:
                 type: string
               storageClass:
                 type: string
             required:
+            - databaseName
+            - databasePass
+            - databasePort
             - databaseType
+            - databaseUser
             - dbUri
+            - s3AccessKey
+            - s3BucketName
+            - s3Endpoint
+            - s3SecretKey
             - schedule
             - storageClass
             type: object

@@ -1,0 +1,20 @@
+apiVersion: backup.oiler.backup/v1
+kind: BackupRequest
+metadata:
+  labels:
+    app.kubernetes.io/name: oiler-backup
+    app.kubernetes.io/managed-by: kustomize
+  name: backuprequest-sample
+spec:
+  dbUri: "10.111.145.28"
+  databasePort: 5432
+  databaseUser: "admin"
+  databasePass: "password"
+  databaseName: "mydatabase"
+  databaseType: "postgres"
+  schedule: "*/1 * * * *"
+  storageClass: "s3"
+  s3Endpoint: "https://10.108.61.74:9000"
+  s3AccessKey: minio
+  s3SecretKey: minio123
+  s3BucketName: mybucket
