@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	BackupService_Backup_FullMethodName     = "/backup.BackupService/Backup"
+	BackupService_Restore_FullMethodName    = "/backup.BackupService/Restore"
 	BackupService_GetMetrics_FullMethodName = "/backup.BackupService/GetMetrics"
 )
 
@@ -28,6 +29,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BackupServiceClient interface {
 	Backup(ctx context.Context, in *BackupRequest, opts ...grpc.CallOption) (*BackupResponse, error)
+	Restore(ctx context.Context, in *BackupRestore, opts ...grpc.CallOption) (*BackupRestoreResponse, error)
 	GetMetrics(ctx context.Context, in *MetricsRequest, opts ...grpc.CallOption) (*MetricsResponse, error)
 }
 
@@ -49,6 +51,16 @@ func (c *backupServiceClient) Backup(ctx context.Context, in *BackupRequest, opt
 	return out, nil
 }
 
+func (c *backupServiceClient) Restore(ctx context.Context, in *BackupRestore, opts ...grpc.CallOption) (*BackupRestoreResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(BackupRestoreResponse)
+	err := c.cc.Invoke(ctx, BackupService_Restore_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *backupServiceClient) GetMetrics(ctx context.Context, in *MetricsRequest, opts ...grpc.CallOption) (*MetricsResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(MetricsResponse)
@@ -64,6 +76,7 @@ func (c *backupServiceClient) GetMetrics(ctx context.Context, in *MetricsRequest
 // for forward compatibility.
 type BackupServiceServer interface {
 	Backup(context.Context, *BackupRequest) (*BackupResponse, error)
+	Restore(context.Context, *BackupRestore) (*BackupRestoreResponse, error)
 	GetMetrics(context.Context, *MetricsRequest) (*MetricsResponse, error)
 	mustEmbedUnimplementedBackupServiceServer()
 }
@@ -77,6 +90,9 @@ type UnimplementedBackupServiceServer struct{}
 
 func (UnimplementedBackupServiceServer) Backup(context.Context, *BackupRequest) (*BackupResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Backup not implemented")
+}
+func (UnimplementedBackupServiceServer) Restore(context.Context, *BackupRestore) (*BackupRestoreResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Restore not implemented")
 }
 func (UnimplementedBackupServiceServer) GetMetrics(context.Context, *MetricsRequest) (*MetricsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetMetrics not implemented")
@@ -120,6 +136,24 @@ func _BackupService_Backup_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BackupService_Restore_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(BackupRestore)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BackupServiceServer).Restore(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BackupService_Restore_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BackupServiceServer).Restore(ctx, req.(*BackupRestore))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _BackupService_GetMetrics_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MetricsRequest)
 	if err := dec(in); err != nil {
@@ -148,6 +182,10 @@ var BackupService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Backup",
 			Handler:    _BackupService_Backup_Handler,
+		},
+		{
+			MethodName: "Restore",
+			Handler:    _BackupService_Restore_Handler,
 		},
 		{
 			MethodName: "GetMetrics",
