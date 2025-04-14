@@ -3,6 +3,7 @@
 # It should be run by config/default
 resources:
 - bases/backup.oiler.backup_backuprequests.yaml
+- bases/backup.oiler.backup_backuprestores.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patches:

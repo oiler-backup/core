@@ -1,0 +1,9 @@
+apiVersion: backup.oiler.backup/v1
+kind: BackupRestore
+metadata:
+  labels:
+    app.kubernetes.io/name: oiler-backup
+    app.kubernetes.io/managed-by: kustomize
+  name: backuprestore-sample
+spec:
+  # TODO(user): Add fields here

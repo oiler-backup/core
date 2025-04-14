@@ -17,4 +17,13 @@ resources:
   kind: BackupRequest
   path: github.com/AntonShadrinNN/oiler-backup/api/v1
   version: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: oiler.backup
+  group: backup
+  kind: BackupRestore
+  path: github.com/AntonShadrinNN/oiler-backup/api/v1
+  version: v1
 version: "3"
