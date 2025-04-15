@@ -154,6 +154,115 @@ func (s *BackupServer) createCronJob(req *BackupRequest) (string, string, error)
 	return generatedJob.Name, generatedJob.Namespace, nil
 }
 
+func (s *BackupServer) Restore(ctx context.Context, req *BackupRestore) (*BackupRestoreResponse, error) {
+	log.Printf("Requested restore: DatabaseURI=%s, DatabaseType=%s, BackupRevision=%s",
+		req.DbUri, req.DatabaseType, req.BackupRevision)
+
+	name, namespace, err := s.createJob(req)
+	if errors.Is(err, ErrAlreadyExists) {
+		return &BackupRestoreResponse{
+			Status:       "Exists",
+			JobName:      name,
+			JobNamespace: namespace,
+		}, nil
+	}
+	if err != nil {
+		log.Printf("Failed to create Job: %v", err)
+		return &BackupRestoreResponse{Status: "Failed to create Job"}, nil
+	}
+
+	return &BackupRestoreResponse{
+		Status:       "Job created successfully",
+		JobName:      name,
+		JobNamespace: namespace,
+	}, nil
+}
+
+func (s *BackupServer) createJob(req *BackupRestore) (string, string, error) {
+	podName := os.Getenv("POD_NAME")
+	namespace := os.Getenv("POD_NAMESPACE")
+	if podName == "" || namespace == "" {
+		return "", "", fmt.Errorf("Failed to get POD_NAME and POD_NAMESPACE from envs")
+	}
+
+	job := &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("backup-%s", req.DatabaseType),
+			Namespace: "default",
+		},
+		Spec: batchv1.JobSpec{
+			Template: corev1.PodTemplateSpec{
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:            "backup-job",
+							Image:           "ashadrinnn/pgbackuper:0.0.1-0",
+							ImagePullPolicy: corev1.PullAlways,
+							Env: []corev1.EnvVar{
+								{
+									Name:  "DB_HOST",
+									Value: req.DbUri,
+								},
+								{
+									Name:  "DB_PORT",
+									Value: fmt.Sprint(req.DbPort),
+								},
+								{
+									Name:  "DB_USER",
+									Value: req.DbUser,
+								},
+								{
+									Name:  "DB_PASSWORD",
+									Value: req.DbPass,
+								},
+								{
+									Name:  "DB_NAME",
+									Value: req.DbName,
+								},
+								{
+									Name:  "S3_ENDPOINT",
+									Value: req.S3Endpoint,
+								},
+								{
+									Name:  "S3_ACCESS_KEY",
+									Value: req.S3AccessKey,
+								},
+								{
+									Name:  "S3_SECRET_KEY",
+									Value: req.S3SecretKey,
+								},
+								{
+									Name:  "S3_BUCKET_NAME",
+									Value: req.S3BucketName,
+								},
+								{
+									Name:  "BACKUP_REVISION",
+									Value: req.BackupRevision,
+								},
+							},
+						},
+					},
+					RestartPolicy: corev1.RestartPolicyOnFailure,
+				},
+			},
+		},
+	}
+	exCj, err := s.kubeClient.BatchV1().Jobs(job.Namespace).Get(context.TODO(), job.Name, metav1.GetOptions{})
+	if apierrors.IsAlreadyExists(err) {
+		return exCj.Name, exCj.Namespace, ErrAlreadyExists
+	}
+	if err != nil && !apierrors.IsNotFound(err) {
+		return "", "", fmt.Errorf("Failed to check cj %s existence: %w", job.Name, err)
+	}
+	generatedJob, err := s.kubeClient.BatchV1().Jobs("default").Create(context.TODO(), job, metav1.CreateOptions{})
+	if err != nil {
+		return "", "", fmt.Errorf("failed to create Job: %w", err)
+	}
+
+	log.Printf("Job '%s' created successfully", job.Name)
+	return generatedJob.Name, generatedJob.Namespace, nil
+}
+
 func (s *BackupServer) GetMetrics(ctx context.Context, req *MetricsRequest) (*MetricsResponse, error) {
 	log.Printf("Got metrics response DatabaseType=%s", req.DatabaseType)
 
