@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package backup;
 
-option go_package = ".";
+option go_package = "./";
 
 message BackupRequest {
   string db_uri = 1;           // URI базы данных
@@ -34,14 +34,14 @@ message BackupRestore {
   string db_pass = 4;          // Пароль пользователя
   string db_name = 5;          // Имя базы данных
   string database_type = 6;    // Тип базы данных (например, postgres)
-  string schedule = 7;         // Расписание бэкапов (cron-формат)
-  string storage_class = 8;    // Класс хранилища (например, s3)
 
   // Параметры MinIO (S3)
   string s3_endpoint = 9;      // Endpoint MinIO (например, http://minio-service:9000)
   string s3_access_key = 10;   // Access Key для MinIO
   string s3_secret_key = 11;   // Secret Key для MinIO
   string s3_bucket_name = 12;  // Имя бакета в MinIO
+
+  string backupRevision = 13; // Версия бэкапа для восстановления
 }
 
 message BackupRestoreResponse {
