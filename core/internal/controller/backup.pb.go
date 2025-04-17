@@ -222,15 +222,14 @@ type BackupRestore struct {
 	DbPass       string                 `protobuf:"bytes,4,opt,name=db_pass,json=dbPass,proto3" json:"db_pass,omitempty"`                   // Пароль пользователя
 	DbName       string                 `protobuf:"bytes,5,opt,name=db_name,json=dbName,proto3" json:"db_name,omitempty"`                   // Имя базы данных
 	DatabaseType string                 `protobuf:"bytes,6,opt,name=database_type,json=databaseType,proto3" json:"database_type,omitempty"` // Тип базы данных (например, postgres)
-	Schedule     string                 `protobuf:"bytes,7,opt,name=schedule,proto3" json:"schedule,omitempty"`                             // Расписание бэкапов (cron-формат)
-	StorageClass string                 `protobuf:"bytes,8,opt,name=storage_class,json=storageClass,proto3" json:"storage_class,omitempty"` // Класс хранилища (например, s3)
 	// Параметры MinIO (S3)
-	S3Endpoint    string `protobuf:"bytes,9,opt,name=s3_endpoint,json=s3Endpoint,proto3" json:"s3_endpoint,omitempty"`          // Endpoint MinIO (например, http://minio-service:9000)
-	S3AccessKey   string `protobuf:"bytes,10,opt,name=s3_access_key,json=s3AccessKey,proto3" json:"s3_access_key,omitempty"`    // Access Key для MinIO
-	S3SecretKey   string `protobuf:"bytes,11,opt,name=s3_secret_key,json=s3SecretKey,proto3" json:"s3_secret_key,omitempty"`    // Secret Key для MinIO
-	S3BucketName  string `protobuf:"bytes,12,opt,name=s3_bucket_name,json=s3BucketName,proto3" json:"s3_bucket_name,omitempty"` // Имя бакета в MinIO
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	S3Endpoint     string `protobuf:"bytes,9,opt,name=s3_endpoint,json=s3Endpoint,proto3" json:"s3_endpoint,omitempty"`          // Endpoint MinIO (например, http://minio-service:9000)
+	S3AccessKey    string `protobuf:"bytes,10,opt,name=s3_access_key,json=s3AccessKey,proto3" json:"s3_access_key,omitempty"`    // Access Key для MinIO
+	S3SecretKey    string `protobuf:"bytes,11,opt,name=s3_secret_key,json=s3SecretKey,proto3" json:"s3_secret_key,omitempty"`    // Secret Key для MinIO
+	S3BucketName   string `protobuf:"bytes,12,opt,name=s3_bucket_name,json=s3BucketName,proto3" json:"s3_bucket_name,omitempty"` // Имя бакета в MinIO
+	BackupRevision string `protobuf:"bytes,13,opt,name=backupRevision,proto3" json:"backupRevision,omitempty"`                   // Версия бэкапа для восстановления
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *BackupRestore) Reset() {
@@ -305,20 +304,6 @@ func (x *BackupRestore) GetDatabaseType() string {
 	return ""
 }
 
-func (x *BackupRestore) GetSchedule() string {
-	if x != nil {
-		return x.Schedule
-	}
-	return ""
-}
-
-func (x *BackupRestore) GetStorageClass() string {
-	if x != nil {
-		return x.StorageClass
-	}
-	return ""
-}
-
 func (x *BackupRestore) GetS3Endpoint() string {
 	if x != nil {
 		return x.S3Endpoint
@@ -343,6 +328,13 @@ func (x *BackupRestore) GetS3SecretKey() string {
 func (x *BackupRestore) GetS3BucketName() string {
 	if x != nil {
 		return x.S3BucketName
+	}
+	return ""
+}
+
+func (x *BackupRestore) GetBackupRevision() string {
+	if x != nil {
+		return x.BackupRevision
 	}
 	return ""
 }
@@ -526,22 +518,21 @@ const file_backup_proto_rawDesc = "" +
 	"\x0eBackupResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\tR\x06status\x12!\n" +
 	"\fcronjob_name\x18\x02 \x01(\tR\vcronjobName\x12+\n" +
-	"\x11cronjob_namespace\x18\x03 \x01(\tR\x10cronjobNamespace\"\xff\x02\n" +
+	"\x11cronjob_namespace\x18\x03 \x01(\tR\x10cronjobNamespace\"\xe6\x02\n" +
 	"\rBackupRestore\x12\x15\n" +
 	"\x06db_uri\x18\x01 \x01(\tR\x05dbUri\x12\x17\n" +
 	"\adb_port\x18\x02 \x01(\x03R\x06dbPort\x12\x17\n" +
 	"\adb_user\x18\x03 \x01(\tR\x06dbUser\x12\x17\n" +
 	"\adb_pass\x18\x04 \x01(\tR\x06dbPass\x12\x17\n" +
 	"\adb_name\x18\x05 \x01(\tR\x06dbName\x12#\n" +
-	"\rdatabase_type\x18\x06 \x01(\tR\fdatabaseType\x12\x1a\n" +
-	"\bschedule\x18\a \x01(\tR\bschedule\x12#\n" +
-	"\rstorage_class\x18\b \x01(\tR\fstorageClass\x12\x1f\n" +
+	"\rdatabase_type\x18\x06 \x01(\tR\fdatabaseType\x12\x1f\n" +
 	"\vs3_endpoint\x18\t \x01(\tR\n" +
 	"s3Endpoint\x12\"\n" +
 	"\rs3_access_key\x18\n" +
 	" \x01(\tR\vs3AccessKey\x12\"\n" +
 	"\rs3_secret_key\x18\v \x01(\tR\vs3SecretKey\x12$\n" +
-	"\x0es3_bucket_name\x18\f \x01(\tR\fs3BucketName\"o\n" +
+	"\x0es3_bucket_name\x18\f \x01(\tR\fs3BucketName\x12&\n" +
+	"\x0ebackupRevision\x18\r \x01(\tR\x0ebackupRevision\"o\n" +
 	"\x15BackupRestoreResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\tR\x06status\x12\x19\n" +
 	"\bjob_name\x18\x02 \x01(\tR\ajobName\x12#\n" +
@@ -555,7 +546,7 @@ const file_backup_proto_rawDesc = "" +
 	"\x06Backup\x12\x15.backup.BackupRequest\x1a\x16.backup.BackupResponse\x12?\n" +
 	"\aRestore\x12\x15.backup.BackupRestore\x1a\x1d.backup.BackupRestoreResponse\x12=\n" +
 	"\n" +
-	"GetMetrics\x12\x16.backup.MetricsRequest\x1a\x17.backup.MetricsResponseB\x03Z\x01.b\x06proto3"
+	"GetMetrics\x12\x16.backup.MetricsRequest\x1a\x17.backup.MetricsResponseB\x04Z\x02./b\x06proto3"
 
 var (
 	file_backup_proto_rawDescOnce sync.Once

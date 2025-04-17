@@ -1,8 +1,16 @@
-FROM golang:1.24 AS builder
+FROM golang:1.24-alpine AS builder
 
+RUN apk add --no-cache postgresql-client git
+
+WORKDIR /app
 COPY . .
 
-RUN go mod download
-RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o main .
+RUN go build -o backup-app .
 
-ENTRYPOINT [ "./main" ]
+FROM alpine:latest
+
+RUN apk add --no-cache postgresql-client
+
+COPY --from=builder /app/backup-app /usr/local/bin/backup-app
+
+ENTRYPOINT ["backup-app"]

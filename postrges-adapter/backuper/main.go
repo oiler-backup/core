@@ -50,7 +50,14 @@ func main() {
 	}
 	log.Println("Connection to database successful")
 
-	dumpCmd := exec.Command("pg_dump", "-h", dbHost, "-p", dbPort, "-U", dbUser, "-d", dbName, "-F", "c", "-f", backupPath)
+	dumpCmd := exec.Command("pg_dump",
+		"-h", dbHost,
+		"-p", dbPort,
+		"-U", dbUser,
+		"-d", dbName,
+		"-F",
+		"c",
+		"-f", backupPath)
 	dumpCmd.Env = append(os.Environ(), fmt.Sprintf("PGPASSWORD=%s", dbPassword))
 
 	output, err := dumpCmd.CombinedOutput()

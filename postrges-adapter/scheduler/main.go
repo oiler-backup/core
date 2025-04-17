@@ -19,6 +19,7 @@ import (
 
 var (
 	ErrAlreadyExists = fmt.Errorf("Already exists")
+	SystemNamespace  = "oiler-backup-system"
 )
 
 type BackupServer struct {
@@ -74,7 +75,7 @@ func (s *BackupServer) createCronJob(req *BackupRequest) (string, string, error)
 	cronJob := &batchv1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("backup-%s", req.DatabaseType),
-			Namespace: "default",
+			Namespace: SystemNamespace,
 		},
 		Spec: batchv1.CronJobSpec{
 			Schedule: req.Schedule,
@@ -145,7 +146,7 @@ func (s *BackupServer) createCronJob(req *BackupRequest) (string, string, error)
 	if err != nil && !apierrors.IsNotFound(err) {
 		return "", "", fmt.Errorf("Failed to check cj %s existence: %w", cronJob.Name, err)
 	}
-	generatedJob, err := s.kubeClient.BatchV1().CronJobs("default").Create(context.TODO(), cronJob, metav1.CreateOptions{})
+	generatedJob, err := s.kubeClient.BatchV1().CronJobs(SystemNamespace).Create(context.TODO(), cronJob, metav1.CreateOptions{})
 	if err != nil {
 		return "", "", fmt.Errorf("failed to create CronJob: %w", err)
 	}
@@ -188,15 +189,15 @@ func (s *BackupServer) createJob(req *BackupRestore) (string, string, error) {
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("backup-%s", req.DatabaseType),
-			Namespace: "default",
+			Namespace: SystemNamespace,
 		},
 		Spec: batchv1.JobSpec{
 			Template: corev1.PodTemplateSpec{
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Name:            "backup-job",
-							Image:           "ashadrinnn/pgbackuper:0.0.1-0",
+							Name:            "backup-restore-job",
+							Image:           "sveb00/pgrestorer:0.0.1-1",
 							ImagePullPolicy: corev1.PullAlways,
 							Env: []corev1.EnvVar{
 								{
@@ -254,7 +255,7 @@ func (s *BackupServer) createJob(req *BackupRestore) (string, string, error) {
 	if err != nil && !apierrors.IsNotFound(err) {
 		return "", "", fmt.Errorf("Failed to check cj %s existence: %w", job.Name, err)
 	}
-	generatedJob, err := s.kubeClient.BatchV1().Jobs("default").Create(context.TODO(), job, metav1.CreateOptions{})
+	generatedJob, err := s.kubeClient.BatchV1().Jobs(SystemNamespace).Create(context.TODO(), job, metav1.CreateOptions{})
 	if err != nil {
 		return "", "", fmt.Errorf("failed to create Job: %w", err)
 	}
