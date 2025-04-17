@@ -12,7 +12,7 @@ spec:
     listKind: BackupRestoreList
     plural: backuprestores
     singular: backuprestore
-  scope: Namespaced
+  scope: Cluster
   versions:
   - name: v1
     schema:
@@ -39,13 +39,49 @@ spec:
           spec:
             description: BackupRestoreSpec defines the desired state of BackupRestore.
             properties:
-              foo:
-                description: Foo is an example field of BackupRestore. Edit backuprestore_types.go
-                  to remove/update
+              backupRevision:
                 type: string
+              databaseName:
+                type: string
+              databasePass:
+                type: string
+              databasePort:
+                type: integer
+              databaseType:
+                type: string
+              databaseUser:
+                type: string
+              dbUri:
+                type: string
+              s3AccessKey:
+                type: string
+              s3BucketName:
+                type: string
+              s3Endpoint:
+                type: string
+              s3SecretKey:
+                type: string
+            required:
+            - backupRevision
+            - databaseName
+            - databasePass
+            - databasePort
+            - databaseType
+            - databaseUser
+            - dbUri
+            - s3AccessKey
+            - s3BucketName
+            - s3Endpoint
+            - s3SecretKey
             type: object
           status:
             description: BackupRestoreStatus defines the observed state of BackupRestore.
+            properties:
+              lastRestoreTime:
+                format: date-time
+                type: string
+              status:
+                type: string
             type: object
         type: object
     served: true

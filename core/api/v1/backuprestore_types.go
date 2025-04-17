@@ -32,12 +32,11 @@ type BackupRestoreSpec struct {
 	DatabaseName string `json:"databaseName"`
 	DatabaseType string `json:"databaseType"`
 
-	Schedule     string `json:"schedule"`
-	S3Endpoint   string `json:"s3Endpoint"`
-	S3AccessKey  string `json:"s3AccessKey"`
-	S3SecretKey  string `json:"s3SecretKey"`
-	S3BucketName string `json:"s3BucketName"`
-	StorageClass string `json:"storageClass"`
+	S3Endpoint     string `json:"s3Endpoint"`
+	S3AccessKey    string `json:"s3AccessKey"`
+	S3SecretKey    string `json:"s3SecretKey"`
+	S3BucketName   string `json:"s3BucketName"`
+	BackupRevision string `json:"backupRevision"` // переделать на int
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }

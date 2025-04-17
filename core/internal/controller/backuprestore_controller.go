@@ -44,18 +44,11 @@ type BackupRestoreReconciler struct {
 // +kubebuilder:rbac:groups=backup.oiler.backup,resources=backuprestores,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=backup.oiler.backup,resources=backuprestores/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=backup.oiler.backup,resources=backuprestores/finalizers,verbs=update
+// +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="batch",resources=jobs,verbs=get;list;watch;create;update;patch;delete
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the BackupRestore object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.20.4/pkg/reconcile
 func (r *BackupRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := log.FromContext(ctx).WithValues("backuprequest", req.NamespacedName)
+	log := log.FromContext(ctx).WithValues("backuprestore", req.NamespacedName)
 	if err := r.loadDatabaseConfig(context.Background(), "default"); err != nil {
 		log.Error(err, "Failed to load config")
 		return ctrl.Result{}, err
@@ -102,7 +95,7 @@ func (r *BackupRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	})
 
 	if err := r.Update(ctx, job); err != nil {
-		log.Error(err, "Failed to update cronJob")
+		log.Error(err, "Failed to update Job")
 		return ctrl.Result{}, err
 	}
 
@@ -116,7 +109,7 @@ func (r *BackupRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	return ctrl.Result{}, nil
 }
 
-func (r *BackupRestoreReconciler) delegateToController(ctx context.Context, controllerAddress string, backupRestore *backupv1.BackupRestore) (*batchv1.CronJob, error) {
+func (r *BackupRestoreReconciler) delegateToController(ctx context.Context, controllerAddress string, backupRestore *backupv1.BackupRestore) (*batchv1.Job, error) {
 	conn, err := grpc.Dial(controllerAddress, grpc.WithInsecure())
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to %s: %w", controllerAddress, err)
@@ -126,23 +119,22 @@ func (r *BackupRestoreReconciler) delegateToController(ctx context.Context, cont
 	client := NewBackupServiceClient(conn)
 
 	req := &BackupRestore{
-		DbUri:        backupRestore.Spec.DatabaseURI,
-		DbPort:       int64(backupRestore.Spec.DatabasePort),
-		DbUser:       backupRestore.Spec.DatabaseUser,
-		DbPass:       backupRestore.Spec.DatabasePass,
-		DbName:       backupRestore.Spec.DatabaseName,
-		DatabaseType: backupRestore.Spec.DatabaseType,
-		Schedule:     backupRestore.Spec.Schedule,
-		StorageClass: backupRestore.Spec.StorageClass,
-		S3Endpoint:   backupRestore.Spec.S3Endpoint,
-		S3AccessKey:  backupRestore.Spec.S3AccessKey,
-		S3SecretKey:  backupRestore.Spec.S3SecretKey,
-		S3BucketName: backupRestore.Spec.S3BucketName,
+		DbUri:          backupRestore.Spec.DatabaseURI,
+		DbPort:         int64(backupRestore.Spec.DatabasePort),
+		DbUser:         backupRestore.Spec.DatabaseUser,
+		DbPass:         backupRestore.Spec.DatabasePass,
+		DbName:         backupRestore.Spec.DatabaseName,
+		DatabaseType:   backupRestore.Spec.DatabaseType,
+		S3Endpoint:     backupRestore.Spec.S3Endpoint,
+		S3AccessKey:    backupRestore.Spec.S3AccessKey,
+		S3SecretKey:    backupRestore.Spec.S3SecretKey,
+		S3BucketName:   backupRestore.Spec.S3BucketName,
+		BackupRevision: backupRestore.Spec.BackupRevision,
 	}
 
 	resp, err := client.Restore(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to invoke backup method %s: %w", controllerAddress, err)
+		return nil, fmt.Errorf("Failed to invoke restore method %s: %w", controllerAddress, err)
 	}
 
 	log.FromContext(ctx).Info(resp.String())
@@ -151,13 +143,13 @@ func (r *BackupRestoreReconciler) delegateToController(ctx context.Context, cont
 		Namespace: resp.JobNamespace,
 		Name:      resp.JobName,
 	}
-	var cronJob batchv1.CronJob
-	err = r.Get(ctx, name, &cronJob)
+	var job batchv1.Job
+	err = r.Get(ctx, name, &job)
 	if err != nil {
 		return nil, err
 	}
 
-	return &cronJob, nil
+	return &job, nil
 }
 
 func (r *BackupRestoreReconciler) loadDatabaseConfig(ctx context.Context, namespace string) error {

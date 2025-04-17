@@ -36,7 +36,7 @@ import (
 
 var (
 	ErrNotSupported  = func(name string) error { return fmt.Errorf("Database %s is not supported", name) }
-	ErrAlreadyExists = fmt.Errorf("CronJob %s already exists")
+	ErrAlreadyExists = fmt.Errorf("Job already exists")
 )
 
 // BackupRequestReconciler reconciles a BackupRequest object
@@ -50,6 +50,8 @@ type BackupRequestReconciler struct {
 // +kubebuilder:rbac:groups=backup.oiler.backup,resources=backuprequests/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=backup.oiler.backup,resources=backuprequests/finalizers,verbs=update
 // +kubebuilder:rbac:groups="",resources=configmaps,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups="batch",resources=cronjobs,verbs=get;list;watch;create;update;patch;delete
+
 func (r *BackupRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx).WithValues("backuprequest", req.NamespacedName)
 	if err := r.loadDatabaseConfig(context.Background(), "default"); err != nil {

@@ -5,8 +5,21 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - backup.oiler.backup
   resources:
+  - backuprequests
   - backuprestores
   verbs:
   - create
@@ -19,14 +32,29 @@ rules:
 - apiGroups:
   - backup.oiler.backup
   resources:
+  - backuprequests/finalizers
   - backuprestores/finalizers
   verbs:
   - update
 - apiGroups:
   - backup.oiler.backup
   resources:
+  - backuprequests/status
   - backuprestores/status
   verbs:
   - get
   - patch
   - update
+- apiGroups:
+  - batch
+  resources:
+  - cronjobs
+  - jobs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
