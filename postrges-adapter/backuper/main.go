@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"time"
 
 	_ "github.com/lib/pq"
 
@@ -66,7 +67,8 @@ func main() {
 	}
 	log.Printf("Backup created successfully: %s\n", backupPath)
 
-	err = uploadToS3(s3Endpoint, s3AccessKey, s3SecretKey, s3BucketName, backupPath, fmt.Sprintf("%s-backup.sql", dbName))
+	dateNow := time.Now().Format("2006-01-02-15-04-05")
+	err = uploadToS3(s3Endpoint, s3AccessKey, s3SecretKey, s3BucketName, backupPath, fmt.Sprintf("%s-%s-backup.sql", dbName, dateNow))
 	if err != nil {
 		log.Fatalf("Failed to upload backup to MinIO: %v", err)
 	}
