@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: database-config
+  namespace: default
+data:
+  postgres: "scheduler-service:50051"

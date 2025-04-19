@@ -29,12 +29,13 @@ type BackupRequestSpec struct {
 	DatabaseName string `json:"databaseName"`
 	DatabaseType string `json:"databaseType"`
 
-	Schedule     string `json:"schedule"`
-	S3Endpoint   string `json:"s3Endpoint"`
-	S3AccessKey  string `json:"s3AccessKey"`
-	S3SecretKey  string `json:"s3SecretKey"`
-	S3BucketName string `json:"s3BucketName"`
-	StorageClass string `json:"storageClass"`
+	Schedule       string `json:"schedule"`
+	S3Endpoint     string `json:"s3Endpoint"`
+	S3AccessKey    string `json:"s3AccessKey"`
+	S3SecretKey    string `json:"s3SecretKey"`
+	S3BucketName   string `json:"s3BucketName"`
+	StorageClass   string `json:"storageClass"`
+	MaxBackupCount int64  `json:"maxBackupCount"`
 }
 
 // BackupRequestStatus defines the observed state of BackupRequest.
