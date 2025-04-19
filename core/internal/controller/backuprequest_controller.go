@@ -36,9 +36,8 @@ import (
 )
 
 var (
-	ErrNotSupported   = func(name string) error { return fmt.Errorf("Database %s is not supported", name) }
-	ErrAlreadyExists  = fmt.Errorf("Job already exists")
-	ErrReconcileAgain = fmt.Errorf("Reconcile again")
+	ErrNotSupported  = func(name string) error { return fmt.Errorf("Database %s is not supported", name) }
+	ErrAlreadyExists = fmt.Errorf("Job already exists")
 )
 
 // BackupRequestReconciler reconciles a BackupRequest object
