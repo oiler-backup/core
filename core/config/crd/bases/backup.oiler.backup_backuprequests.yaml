@@ -53,6 +53,9 @@ spec:
                 type: string
               dbUri:
                 type: string
+              maxBackupCount:
+                format: int64
+                type: integer
               s3AccessKey:
                 type: string
               s3BucketName:
@@ -72,6 +75,7 @@ spec:
             - databaseType
             - databaseUser
             - dbUri
+            - maxBackupCount
             - s3AccessKey
             - s3BucketName
             - s3Endpoint
