@@ -38,8 +38,8 @@ import (
 )
 
 var (
-	ErrNotSupported   = func(name string) error { return fmt.Errorf("Database %s is not supported", name) }
-	ErrAlreadyExists  = fmt.Errorf("Job already exists")
+	ErrNotSupported   = func(name string) error { return fmt.Errorf("database %s is not supported", name) }
+	ErrAlreadyExists  = fmt.Errorf("job already exists")
 	CleanerJobImage   = "ashadrinnn/cleaner:0.0.1-0"
 	OperatorNamespace = "oiler-backup-system"
 )
@@ -150,7 +150,7 @@ func (r *BackupRequestReconciler) delegateToController(ctx context.Context, cont
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("Failed to connect to %s: %w", controllerAddress, err)
+		return nil, fmt.Errorf("failed to connect to %s: %w", controllerAddress, err)
 	}
 	defer conn.Close()
 
@@ -173,7 +173,7 @@ func (r *BackupRequestReconciler) delegateToController(ctx context.Context, cont
 
 	resp, err := client.Backup(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to invoke backup method %s: %w", controllerAddress, err)
+		return nil, fmt.Errorf("failed to invoke backup method %s: %w", controllerAddress, err)
 	}
 	if resp.Status == "Exists" {
 		return nil, ErrAlreadyExists
@@ -273,7 +273,7 @@ func (r *BackupRequestReconciler) loadDatabaseConfig(ctx context.Context, namesp
 
 	log.Info("Looking up for ConfigMap", "name", configMapName, "namespace", namespace)
 	if err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: configMapName}, configMap); err != nil {
-		return fmt.Errorf("Unable to get ConfigMap %s: %w", configMapName, err)
+		return fmt.Errorf("unable to get ConfigMap %s: %w", configMapName, err)
 	}
 
 	r.DatabaseControllers = configMap.Data
