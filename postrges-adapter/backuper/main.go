@@ -19,6 +19,7 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
 	dbHost := os.Getenv("DB_HOST")
 	dbPort := os.Getenv("DB_PORT")
 	dbUser := os.Getenv("DB_USER")
@@ -45,13 +46,13 @@ func main() {
 	}
 	defer db.Close()
 
-	err = db.Ping()
+	err = db.PingContext(ctx)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	log.Println("Connection to database successful")
 
-	dumpCmd := exec.Command("pg_dump",
+	dumpCmd := exec.CommandContext(ctx, "pg_dump",
 		"-h", dbHost,
 		"-p", dbPort,
 		"-U", dbUser,
@@ -68,28 +69,17 @@ func main() {
 	log.Printf("Backup created successfully: %s\n", backupPath)
 
 	dateNow := time.Now().Format("2006-01-02-15-04-05")
-	err = uploadToS3(s3Endpoint, s3AccessKey, s3SecretKey, s3BucketName, backupPath, fmt.Sprintf("%s-%s-backup.sql", dbName, dateNow))
+	err = uploadToS3(ctx, s3Endpoint, s3AccessKey, s3SecretKey, s3BucketName, backupPath, fmt.Sprintf("%s-%s-backup.sql", dbName, dateNow))
 	if err != nil {
 		log.Fatalf("Failed to upload backup to MinIO: %v", err)
 	}
 	log.Println("Backup successfully loaded to MinIO")
 }
 
-func uploadToS3(endpoint, accessKey, secretKey, bucketName, filePath, objectKey string) error {
-	customResolver := aws.EndpointResolverFunc(func(service, region string) (aws.Endpoint, error) {
-		if service == s3.ServiceID && region == "us-east-1" {
-			return aws.Endpoint{
-				URL:               endpoint,
-				SigningRegion:     "us-east-1",
-				HostnameImmutable: true,
-			}, nil
-		}
-		return aws.Endpoint{}, fmt.Errorf("unsupported service or region")
-	})
+func uploadToS3(ctx context.Context, endpoint, accessKey, secretKey, bucketName, filePath, objectKey string) error {
 
-	cfg, err := config.LoadDefaultConfig(context.TODO(),
+	cfg, err := config.LoadDefaultConfig(ctx,
 		config.WithRegion("us-east-1"),
-		config.WithEndpointResolver(customResolver),
 		config.WithCredentialsProvider(aws.CredentialsProviderFunc(func(ctx context.Context) (aws.Credentials, error) {
 			return aws.Credentials{
 				AccessKeyID:     accessKey,
@@ -98,11 +88,12 @@ func uploadToS3(endpoint, accessKey, secretKey, bucketName, filePath, objectKey 
 		})),
 	)
 	if err != nil {
-		return fmt.Errorf("failure during configuring AWS SDK: %w", err)
+		log.Fatalf("Failure during AWS SDK configuration: %v", err)
 	}
 
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.UsePathStyle = true
+		o.BaseEndpoint = aws.String(endpoint)
 		o.HTTPClient = &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
@@ -118,7 +109,7 @@ func uploadToS3(endpoint, accessKey, secretKey, bucketName, filePath, objectKey 
 	}
 	defer file.Close()
 
-	_, err = client.PutObject(context.TODO(), &s3.PutObjectInput{
+	_, err = client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(bucketName),
 		Key:    aws.String(objectKey),
 		Body:   file,
