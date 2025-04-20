@@ -2,10 +2,7 @@ module restorer
 
 go 1.24.2
 
-require (
-	github.com/aws/aws-sdk-go-v2 v1.36.3
-	github.com/lib/pq v1.10.9
-)
+require github.com/aws/aws-sdk-go-v2 v1.36.3
 
 require (
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.10 // indirect

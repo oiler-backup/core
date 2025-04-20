@@ -20,10 +20,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 
 	grpc "google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -48,27 +51,31 @@ type BackupRestoreReconciler struct {
 // +kubebuilder:rbac:groups="batch",resources=jobs,verbs=get;list;watch;create;update;patch;delete
 
 func (r *BackupRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	jExists := false
 	log := log.FromContext(ctx).WithValues("backuprestore", req.NamespacedName)
-	if err := r.loadDatabaseConfig(context.Background(), "default"); err != nil {
-		log.Error(err, "Failed to load config")
-		return ctrl.Result{}, err
-	}
 	var backupRestore backupv1.BackupRestore
-	if err := r.Get(ctx, req.NamespacedName, &backupRestore); err != nil {
-		log.Error(err, "Unable to get BackupRestore object")
+
+	err := r.Get(ctx, req.NamespacedName, &backupRestore)
+	if apierrors.IsNotFound(err) {
+		return ctrl.Result{}, nil
+	} else if backupRestore.Status.Status != "" {
+		return ctrl.Result{}, nil
+	} else if err != nil {
+		log.Error(err, "Unable to get BackupRequest object")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if backupRestore.Status.Status == "In Progress" {
-		log.Info("BackupRestore %s is already in progress, skipping...", "name", backupRestore.Name)
-		return ctrl.Result{}, nil
-	}
-
-	backupRestore.Status.Status = "In Progress"
-	if err := r.Status().Update(ctx, &backupRestore); err != nil {
-		log.Error(err, "Unable to update BackupRestore status")
+	if err := r.loadDatabaseConfig(context.Background(), OperatorNamespace); err != nil {
+		log.Error(err, "Failed to load config")
 		return ctrl.Result{}, err
 	}
+	backupRestore.Status.Status = StatusInProgress
+	if err := r.Status().Update(ctx, &backupRestore); err != nil {
+		log.Error(err, "Unable to update BackupRequest status")
+		r.mustSetFailed(ctx, req.NamespacedName)
+		return ctrl.Result{}, err
+	}
+
 	controllerAddress, exists := r.DatabaseControllers[backupRestore.Spec.DatabaseType]
 	if !exists {
 		err := ErrNotSupported(backupRestore.Spec.DatabaseType)
@@ -79,40 +86,49 @@ func (r *BackupRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	job, err := r.delegateToController(ctx, controllerAddress, &backupRestore)
 	if errors.Is(err, ErrAlreadyExists) {
 		log.Info("Job for BackupRestore %s already exists", "name", backupRestore.Name)
+		jExists = true
 		return ctrl.Result{}, nil
-	}
-	if err != nil {
+	} else if err != nil {
 		log.Error(err, "Cannot delegate to controller")
 		return ctrl.Result{}, err
 	}
 
-	job.OwnerReferences = append(job.OwnerReferences, metav1.OwnerReference{
-		APIVersion:         backupRestore.APIVersion,
-		Kind:               backupRestore.Kind,
-		Name:               backupRestore.Name,
-		UID:                backupRestore.UID,
-		BlockOwnerDeletion: func() *bool { b := true; return &b }(),
-	})
+	if !jExists {
+		job.OwnerReferences = append(job.OwnerReferences, metav1.OwnerReference{
+			APIVersion:         backupRestore.APIVersion,
+			Kind:               backupRestore.Kind,
+			Name:               backupRestore.Name,
+			UID:                backupRestore.UID,
+			BlockOwnerDeletion: func() *bool { b := true; return &b }(),
+		})
 
-	if err := r.Update(ctx, job); err != nil {
-		log.Error(err, "Failed to update Job")
-		return ctrl.Result{}, err
+		if err := r.Update(ctx, job); err != nil {
+			log.Error(err, "Failed to update job")
+			r.mustSetFailed(ctx, req.NamespacedName)
+			return ctrl.Result{}, err
+		}
 	}
 
-	log.Info("Successfully updated owner references")
-
-	backupRestore.Status.Status = "Success"
+	backupRestore.Status.Status = StatusSuccess
 	if err := r.Status().Update(ctx, &backupRestore); err != nil {
 		log.Error(err, "Unable to update BackupRestore status")
+		r.mustSetFailed(ctx, req.NamespacedName)
 		return ctrl.Result{}, err
 	}
+
+	log.Info("Successfully created all resources")
 	return ctrl.Result{}, nil
 }
 
 func (r *BackupRestoreReconciler) delegateToController(ctx context.Context, controllerAddress string, backupRestore *backupv1.BackupRestore) (*batchv1.Job, error) {
-	conn, err := grpc.Dial(controllerAddress, grpc.WithInsecure())
+	conn, err := grpc.NewClient(
+		controllerAddress,
+		grpc.WithTransportCredentials(
+			insecure.NewCredentials(),
+		),
+	)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to connect to %s: %w", controllerAddress, err)
+		return nil, fmt.Errorf("failed to connect to %s: %w", controllerAddress, err)
 	}
 	defer conn.Close()
 
@@ -134,7 +150,10 @@ func (r *BackupRestoreReconciler) delegateToController(ctx context.Context, cont
 
 	resp, err := client.Restore(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to invoke restore method %s: %w", controllerAddress, err)
+		return nil, fmt.Errorf("failed to invoke restore method %s: %w", controllerAddress, err)
+	}
+	if resp.Status == "Exists" {
+		return nil, ErrAlreadyExists
 	}
 
 	log.FromContext(ctx).Info(resp.String())
@@ -153,19 +172,47 @@ func (r *BackupRestoreReconciler) delegateToController(ctx context.Context, cont
 }
 
 func (r *BackupRestoreReconciler) loadDatabaseConfig(ctx context.Context, namespace string) error {
+	log := log.FromContext(ctx)
 	configMap := &corev1.ConfigMap{}
 	configMapName := "database-config"
 
+	log.Info("Looking up for ConfigMap", "name", configMapName, "namespace", namespace)
 	if err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: configMapName}, configMap); err != nil {
-		return fmt.Errorf("Unable to get ConfigMap %s: %w", configMapName, err)
+		return fmt.Errorf("unable to get ConfigMap %s: %w", configMapName, err)
 	}
 
 	r.DatabaseControllers = configMap.Data
 	return nil
 }
 
+func (r *BackupRestoreReconciler) mustSetFailed(ctx context.Context, nsName types.NamespacedName) {
+	log := log.FromContext(ctx).WithValues("set-failed", nsName)
+	var backupRestore backupv1.BackupRequest
+	if err := r.Get(ctx, nsName, &backupRestore); err != nil {
+		panic(err)
+	}
+
+	if backupRestore.Status.Status == StatusFailure || backupRestore.Status.Status == StatusSuccess {
+		return
+	}
+
+	backupRestore.Status.Status = StatusFailure
+	log.Info("Setting BackupRestore failed")
+	if err := r.Status().Update(ctx, &backupRestore); err != nil {
+		log.Error(err, "Failed to set failed status on br %s", backupRestore.Name)
+		panic(err)
+	}
+
+	log.Info("Successfully updated BackupRequest status to failed state")
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *BackupRestoreReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	operatorNamespace, exists := os.LookupEnv("OPERATOR_NAMESPACE")
+	if exists {
+		OperatorNamespace = operatorNamespace
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&backupv1.BackupRestore{}).
 		Named("backuprestore").

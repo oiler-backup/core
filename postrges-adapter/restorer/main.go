@@ -19,6 +19,7 @@ import (
 
 func main() {
 	// Загрузка переменных окружения
+	ctx := context.Background()
 	dbHost := os.Getenv("DB_HOST")
 	dbPort := os.Getenv("DB_PORT")
 	dbUser := os.Getenv("DB_USER")
@@ -31,14 +32,19 @@ func main() {
 	s3SecretKey := os.Getenv("S3_SECRET_KEY")
 	s3BucketName := os.Getenv("S3_BUCKET_NAME")
 
-	backupRevisionStr := os.Getenv("BACKUP_REVISION") // Параметр для выбора версии бэкапа
+	backupRevisionStr := os.Getenv("BACKUP_REVISION")
+
+	if dbHost == "" || dbPort == "" || dbUser == "" || dbPassword == "" || dbName == "" ||
+		s3Endpoint == "" || s3AccessKey == "" || s3SecretKey == "" || s3BucketName == "" {
+		log.Fatal("Envs DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET_NAME are required")
+	}
 	backupRevision, err := strconv.Atoi(backupRevisionStr)
 	if err != nil || backupRevision < 0 {
 		log.Fatalf("Invalid BACKUP_REVISION value: %s. It must be a non-negative integer.", backupRevisionStr)
 	}
 
 	// 1. Получение списка бэкапов из S3
-	client, err := createS3Client(s3Endpoint, s3AccessKey, s3SecretKey)
+	client, err := createS3Client(ctx, s3Endpoint, s3AccessKey, s3SecretKey)
 	if err != nil {
 		log.Fatalf("Failed to create S3 client: %v", err)
 	}
@@ -73,19 +79,9 @@ func main() {
 }
 
 // createS3Client создает клиента S3
-func createS3Client(endpoint, accessKey, secretKey string) (*s3.Client, error) {
-	customResolver := aws.EndpointResolverFunc(func(service, region string) (aws.Endpoint, error) {
-		if service == s3.ServiceID && region == "us-east-1" { // Настройте регион по необходимости
-			return aws.Endpoint{
-				URL: endpoint,
-			}, nil
-		}
-		return aws.Endpoint{}, fmt.Errorf("unknown endpoint requested")
-	})
-
-	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion("us-east-1"), // Убедитесь, что регион соответствует вашему S3
-		config.WithEndpointResolver(customResolver),
+func createS3Client(ctx context.Context, endpoint, accessKey, secretKey string) (*s3.Client, error) {
+	cfg, err := config.LoadDefaultConfig(ctx,
+		config.WithRegion("us-east-1"),
 		config.WithCredentialsProvider(aws.CredentialsProviderFunc(func(ctx context.Context) (aws.Credentials, error) {
 			return aws.Credentials{
 				AccessKeyID:     accessKey,
@@ -94,11 +90,12 @@ func createS3Client(endpoint, accessKey, secretKey string) (*s3.Client, error) {
 		})),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to load S3 config: %v", err)
+		log.Fatalf("Failure during AWS SDK configuration: %v", err)
 	}
 
 	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.UsePathStyle = true
+		o.BaseEndpoint = aws.String(endpoint)
 		o.HTTPClient = &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
