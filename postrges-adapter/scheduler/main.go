@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 
 	"google.golang.org/grpc"
 	batchv1 "k8s.io/api/batch/v1"
@@ -19,6 +20,8 @@ import (
 var (
 	ErrAlreadyExists = fmt.Errorf("Already exists")
 	SystemNamespace  = "oiler-backup-system"
+	BackuperVersion  = "ashadrinnn/pgbackuper:0.0.1-0"
+	RestorerVersion  = "sveb00/pgrestorer:0.0.1-1"
 )
 
 type BackupServer struct {
@@ -79,7 +82,7 @@ func (s *BackupServer) createCronJob(req *BackupRequest) (string, string, error)
 							Containers: []corev1.Container{
 								{
 									Name:            "backup-job",
-									Image:           "ashadrinnn/pgbackuper:0.0.1-0",
+									Image:           BackuperVersion,
 									ImagePullPolicy: corev1.PullAlways,
 									Env: []corev1.EnvVar{
 										{
@@ -186,7 +189,7 @@ func (s *BackupServer) createJob(req *BackupRestore) (string, string, error) {
 					Containers: []corev1.Container{
 						{
 							Name:            "backup-restore-job",
-							Image:           "sveb00/pgrestorer:0.0.1-1",
+							Image:           RestorerVersion,
 							ImagePullPolicy: corev1.PullAlways,
 							Env: []corev1.EnvVar{
 								{
@@ -263,12 +266,29 @@ func (s *BackupServer) GetMetrics(ctx context.Context, req *MetricsRequest) (*Me
 }
 
 func main() {
+	systemNamespace, exists := os.LookupEnv("SYSTEM_NAMESPACE")
+	if exists {
+		SystemNamespace = systemNamespace
+	}
+	port, exists := os.LookupEnv("PORT")
+	if !exists {
+		port = "50051"
+	}
+	backuperVersion, exists := os.LookupEnv("BACKUPER_VERSION")
+	if exists {
+		BackuperVersion = backuperVersion
+	}
+	restorerVersion, exists := os.LookupEnv("RESTORER_VERSION")
+	if exists {
+		RestorerVersion = restorerVersion
+	}
+
 	server, err := NewBackupServer()
 	if err != nil {
 		log.Fatalf("Failed to create server: %v", err)
 	}
 
-	lis, err := net.Listen("tcp", ":50051")
+	lis, err := net.Listen("tcp", fmt.Sprint(":", port))
 	if err != nil {
 		log.Fatalf("Failed to listen port: %v", err)
 	}
@@ -277,7 +297,7 @@ func main() {
 
 	RegisterBackupServiceServer(grpcServer, server)
 
-	log.Println("Running grpc server on port :50051...")
+	log.Printf("Running grpc server on port %s...", port)
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Failed running server: %v", err)
 	}

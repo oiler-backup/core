@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.sheduler.name }}-deployment
+  namespace: {{ .Values.sheduler.namespace }}
+spec:
+  replicas: {{ .Values.sheduler.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.sheduler.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.sheduler.name }}
+    spec:
+      serviceAccountName: {{ .Values.sheduler.serviceAccountName }}
+      containers:
+        - name: grpc-server
+          image: {{ .Values.sheduler.image }}
+          imagePullPolicy: {{ .Values.sheduler.imagePullPolicy }}
+          env:
+          - name: "SYSTEM_NAMESPACE"
+            value: {{ .Values.sheduler.namespace | default "oiler-backup-system" }}
+          - name: "PORT"
+            value: {{ .Values.sheduler.port | default "50051" | quote }}
+          {{ if .Values.backuper.image }}
+          - name: "BACKUPER_VERSION"
+            value: {{ .Values.backuper.image }}
+          {{ end }}
+          {{ if .Values.restorer.image }}
+          - name: "RESTORER_VERSION"
+            value: {{ .Values.restorer.image }}
+          {{ end }}
+          ports:
+            - containerPort: {{ .Values.sheduler.port | default "50051" }}
