@@ -147,7 +147,9 @@ func (s *BackupServer) createCronJob(req *BackupRequest) (string, string, error)
 		return "", "", fmt.Errorf("Failed to check cj %s existence: %w", cronJob.Name, err)
 	}
 	generatedJob, err := s.kubeClient.BatchV1().CronJobs(SystemNamespace).Create(context.TODO(), cronJob, metav1.CreateOptions{})
-	if err != nil {
+	if apierrors.IsAlreadyExists(err) {
+		return exCj.Name, exCj.Namespace, ErrAlreadyExists
+	} else if err != nil {
 		return "", "", fmt.Errorf("failed to create CronJob: %w", err)
 	}
 
