@@ -16,7 +16,7 @@ spec:
       serviceAccountName: scheduler-sa
       containers:
         - name: grpc-server
-          image: sveb00/pgad:0.0.1-1
+          image: ashadrinnn/pgad:0.0.1-5
           imagePullPolicy: Always
           env:
           - name: POD_NAME

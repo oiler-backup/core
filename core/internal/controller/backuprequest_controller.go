@@ -20,8 +20,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -36,8 +38,16 @@ import (
 )
 
 var (
-	ErrNotSupported  = func(name string) error { return fmt.Errorf("Database %s is not supported", name) }
-	ErrAlreadyExists = fmt.Errorf("Job already exists")
+	ErrNotSupported   = func(name string) error { return fmt.Errorf("Database %s is not supported", name) }
+	ErrAlreadyExists  = fmt.Errorf("Job already exists")
+	CleanerJobImage   = "ashadrinnn/cleaner:0.0.1-0"
+	OperatorNamespace = "oiler-backup-system"
+)
+
+var (
+	StatusSuccess    = "Success"
+	StatusInProgress = "In Progress"
+	StatusFailure    = "Failure"
 )
 
 // BackupRequestReconciler reconciles a BackupRequest object
@@ -56,24 +66,26 @@ type BackupRequestReconciler struct {
 func (r *BackupRequestReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	cjExists := false
 	log := log.FromContext(ctx).WithValues("backuprequest", req.NamespacedName)
-	if err := r.loadDatabaseConfig(context.Background(), "default"); err != nil {
-		log.Error(err, "Failed to load config")
-		return ctrl.Result{}, err
-	}
 	var backupRequest backupv1.BackupRequest
-	if err := r.Get(ctx, req.NamespacedName, &backupRequest); err != nil {
+	err := r.Get(ctx, req.NamespacedName, &backupRequest)
+	if apierrors.IsNotFound(err) {
+		return ctrl.Result{}, nil
+	} else if backupRequest.Status.Status != "" {
+		return ctrl.Result{}, nil
+	} else if err != nil {
 		log.Error(err, "Unable to get BackupRequest object")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if backupRequest.Status.Status == "In Progress" {
-		log.Info("BackupRequest %s is already in progress, skipping...", "name", backupRequest.Name)
-		return ctrl.Result{}, nil
+	if err := r.loadDatabaseConfig(ctx, OperatorNamespace); err != nil {
+		log.Error(err, "Failed to load config")
+		return ctrl.Result{}, err
 	}
 
-	backupRequest.Status.Status = "In Progress"
+	backupRequest.Status.Status = StatusInProgress
 	if err := r.Status().Update(ctx, &backupRequest); err != nil {
 		log.Error(err, "Unable to update BackupRequest status")
+		r.mustSetFailed(ctx, req.NamespacedName)
 		return ctrl.Result{}, err
 	}
 
@@ -81,15 +93,17 @@ func (r *BackupRequestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	if !exists {
 		err := ErrNotSupported(backupRequest.Spec.DatabaseType)
 		log.Error(err, "Make sure to update database-config cm")
+		r.mustSetFailed(ctx, req.NamespacedName)
 		return ctrl.Result{}, err
 	}
 
 	cronJob, err := r.delegateToController(ctx, controllerAddress, &backupRequest)
 	if errors.Is(err, ErrAlreadyExists) {
-		log.Info("CronJob for BackupRequest %s already exists", "name", backupRequest.Name)
+		log.Info("CronJob for BackupRequest already exists", "name", backupRequest.Name)
 		cjExists = true
 	} else if err != nil {
 		log.Error(err, "Cannot delegate to controller")
+		r.mustSetFailed(ctx, req.NamespacedName)
 		return ctrl.Result{}, err
 	}
 
@@ -104,26 +118,37 @@ func (r *BackupRequestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		if err := r.Update(ctx, cronJob); err != nil {
 			log.Error(err, "Failed to update cronJob")
+			r.mustSetFailed(ctx, req.NamespacedName)
 			return ctrl.Result{}, err
 		}
 	}
 
-	_, err = r.createCleanupJob(ctx, &backupRequest)
+	_, err = r.createCleanupJob(ctx, &backupRequest, OperatorNamespace)
 	if err != nil {
 		log.Error(err, "Failed to create cleanupJob")
+		r.mustSetFailed(ctx, req.NamespacedName)
 		return ctrl.Result{}, err
 	}
 
-	backupRequest.Status.Status = "Success"
+	backupRequest.Status.Status = StatusSuccess
 	if err := r.Status().Update(ctx, &backupRequest); err != nil {
 		log.Error(err, "Unable to update BackupRequest status")
+		r.mustSetFailed(ctx, req.NamespacedName)
 		return ctrl.Result{}, err
 	}
+
+	log.Info("Successfully created all resources")
 	return ctrl.Result{}, nil
 }
 
 func (r *BackupRequestReconciler) delegateToController(ctx context.Context, controllerAddress string, backupRequest *backupv1.BackupRequest) (*batchv1.CronJob, error) {
-	conn, err := grpc.Dial(controllerAddress, grpc.WithInsecure())
+	conn, err := grpc.NewClient(
+		controllerAddress,
+		grpc.WithTransportCredentials(
+			insecure.NewCredentials(),
+		),
+	)
+
 	if err != nil {
 		return nil, fmt.Errorf("Failed to connect to %s: %w", controllerAddress, err)
 	}
@@ -169,11 +194,11 @@ func (r *BackupRequestReconciler) delegateToController(ctx context.Context, cont
 	return &cronJob, nil
 }
 
-func (r *BackupRequestReconciler) createCleanupJob(ctx context.Context, req *backupv1.BackupRequest) (*batchv1.CronJob, error) {
+func (r *BackupRequestReconciler) createCleanupJob(ctx context.Context, req *backupv1.BackupRequest, ns string) (*batchv1.CronJob, error) {
 	cleanerCronJob := &batchv1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("cleaner-%s", req.Spec.DatabaseName),
-			Namespace: "oiler-backup-system",
+			Namespace: ns,
 			OwnerReferences: []metav1.OwnerReference{
 				{
 					APIVersion:         req.APIVersion,
@@ -230,21 +255,11 @@ func (r *BackupRequestReconciler) createCleanupJob(ctx context.Context, req *bac
 			},
 		},
 	}
-	name := types.NamespacedName{
-		Namespace: cleanerCronJob.Namespace,
-		Name:      cleanerCronJob.Name,
-	}
-	var cj batchv1.CronJob
-	err := r.Get(ctx, name, &cj)
-	if apierrors.IsAlreadyExists(err) {
-		return &cj, err
-	}
-	if err != nil && !apierrors.IsNotFound(err) {
-		return nil, err
-	}
 
-	err = r.Create(ctx, cleanerCronJob)
-	if err != nil {
+	err := r.Create(ctx, cleanerCronJob)
+	if apierrors.IsAlreadyExists(err) {
+		return cleanerCronJob, nil
+	} else if err != nil {
 		return nil, err
 	}
 
@@ -252,9 +267,11 @@ func (r *BackupRequestReconciler) createCleanupJob(ctx context.Context, req *bac
 }
 
 func (r *BackupRequestReconciler) loadDatabaseConfig(ctx context.Context, namespace string) error {
+	log := log.FromContext(ctx)
 	configMap := &corev1.ConfigMap{}
 	configMapName := "database-config"
 
+	log.Info("Looking up for ConfigMap", "name", configMapName, "namespace", namespace)
 	if err := r.Get(ctx, client.ObjectKey{Namespace: namespace, Name: configMapName}, configMap); err != nil {
 		return fmt.Errorf("Unable to get ConfigMap %s: %w", configMapName, err)
 	}
@@ -263,8 +280,39 @@ func (r *BackupRequestReconciler) loadDatabaseConfig(ctx context.Context, namesp
 	return nil
 }
 
+func (r *BackupRequestReconciler) mustSetFailed(ctx context.Context, nsName types.NamespacedName) {
+	log := log.FromContext(ctx).WithValues("set-failed", nsName)
+	var backupRequest backupv1.BackupRequest
+	if err := r.Get(ctx, nsName, &backupRequest); err != nil {
+		panic(err)
+	}
+
+	if backupRequest.Status.Status == StatusFailure || backupRequest.Status.Status == StatusSuccess {
+		return
+	}
+
+	backupRequest.Status.Status = StatusFailure
+	log.Info("Setting BackupRequest failed")
+	if err := r.Status().Update(ctx, &backupRequest); err != nil {
+		log.Error(err, "Failed to set failed status on br %s", backupRequest.Name)
+		panic(err)
+	}
+
+	log.Info("Successfully updated BackupRequest status to failed state")
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *BackupRequestReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	cleanerJobImage, exists := os.LookupEnv("CLEANER_JOB_IMAGE")
+	if exists {
+		CleanerJobImage = cleanerJobImage
+	}
+
+	operatorNamespace, exists := os.LookupEnv("OPERATOR_NAMESPACE")
+	if exists {
+		OperatorNamespace = operatorNamespace
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&backupv1.BackupRequest{}).
 		Named("backuprequest").

@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: ashadrinnn/oiler-backup
-  newTag: 0.0.1-10
+  newTag: 0.0.1-11
