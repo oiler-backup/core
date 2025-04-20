@@ -38,10 +38,6 @@ func main() {
 		s3Endpoint == "" || s3AccessKey == "" || s3SecretKey == "" || s3BucketName == "" {
 		log.Fatal("Envs DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET_NAME are required")
 	}
-	backupRevision, err := strconv.Atoi(backupRevisionStr)
-	if err != nil || backupRevision < 0 {
-		log.Fatalf("Invalid BACKUP_REVISION value: %s. It must be a non-negative integer.", backupRevisionStr)
-	}
 
 	// 1. Получение списка бэкапов из S3
 	client, err := createS3Client(ctx, s3Endpoint, s3AccessKey, s3SecretKey)
@@ -54,14 +50,31 @@ func main() {
 		log.Fatalf("Failed to list backup files from S3: %v", err)
 	}
 
-	// Сортировка бэкапов по времени (по убыванию)
-	sort.Sort(sort.Reverse(sort.StringSlice(backupKeys)))
+	var selectedBackupKey string
 
-	// Выбор бэкапа на основе backupRevision
-	if backupRevision >= len(backupKeys) {
-		log.Fatalf("BACKUP_REVISION (%d) is out of range. Available backups: %d", backupRevision, len(backupKeys))
+	backupRevision, err := strconv.Atoi(backupRevisionStr)
+	if err == nil && backupRevision >= 0 {
+		// Если backupRevisionStr - число, выбираем бэкап по индексу
+		sort.Sort(sort.Reverse(sort.StringSlice(backupKeys))) // Сортируем по времени (по убыванию)
+
+		if backupRevision >= len(backupKeys) {
+			log.Fatalf("BACKUP_REVISION (%d) is out of range. Available backups: %d", backupRevision, len(backupKeys))
+		}
+		selectedBackupKey = backupKeys[backupRevision]
+	} else {
+		// Если backupRevisionStr - строка, ищем бэкап с таким именем
+		found := false
+		for _, key := range backupKeys {
+			if key == backupRevisionStr {
+				selectedBackupKey = key
+				found = true
+				break
+			}
+		}
+		if !found {
+			log.Fatalf("Backup with name '%s' not found in S3 bucket", backupRevisionStr)
+		}
 	}
-	selectedBackupKey := backupKeys[backupRevision]
 
 	// 2. Скачивание выбранного бэкапа из S3
 	err = downloadBackupFromS3(client, s3BucketName, selectedBackupKey, backupPath)
