@@ -77,7 +77,6 @@ func main() {
 }
 
 func uploadToS3(ctx context.Context, endpoint, accessKey, secretKey, bucketName, filePath, objectKey string) error {
-
 	cfg, err := config.LoadDefaultConfig(ctx,
 		config.WithRegion("us-east-1"),
 		config.WithCredentialsProvider(aws.CredentialsProviderFunc(func(ctx context.Context) (aws.Credentials, error) {

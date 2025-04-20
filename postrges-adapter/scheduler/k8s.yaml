@@ -18,15 +18,6 @@ spec:
         - name: grpc-server
           image: ashadrinnn/pgad:0.0.1-5
           imagePullPolicy: Always
-          env:
-          - name: POD_NAME
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.name
-          - name: POD_NAMESPACE
-            valueFrom:
-              fieldRef:
-                fieldPath: metadata.namespace
           ports:
             - containerPort: 50051
 ---

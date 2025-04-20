@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
 
 	"google.golang.org/grpc"
 	batchv1 "k8s.io/api/batch/v1"
@@ -66,12 +65,6 @@ func (s *BackupServer) Backup(ctx context.Context, req *BackupRequest) (*BackupR
 }
 
 func (s *BackupServer) createCronJob(req *BackupRequest) (string, string, error) {
-	podName := os.Getenv("POD_NAME")
-	namespace := os.Getenv("POD_NAMESPACE")
-	if podName == "" || namespace == "" {
-		return "", "", fmt.Errorf("Failed to get POD_NAME and POD_NAMESPACE from envs")
-	}
-
 	cronJob := &batchv1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("backup-%s", req.DatabaseType),
@@ -182,12 +175,6 @@ func (s *BackupServer) Restore(ctx context.Context, req *BackupRestore) (*Backup
 }
 
 func (s *BackupServer) createJob(req *BackupRestore) (string, string, error) {
-	podName := os.Getenv("POD_NAME")
-	namespace := os.Getenv("POD_NAMESPACE")
-	if podName == "" || namespace == "" {
-		return "", "", fmt.Errorf("Failed to get POD_NAME and POD_NAMESPACE from envs")
-	}
-
 	job := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("backup-%s", req.DatabaseType),
