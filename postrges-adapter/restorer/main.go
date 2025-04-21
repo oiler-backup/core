@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -172,7 +173,6 @@ func downloadBackupFromS3(client *s3.Client, bucketName, objectKey, localFilePat
 func restorePostgresBackup(host, port, user, password, dbName, backupPath string) error {
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbName)
-
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
