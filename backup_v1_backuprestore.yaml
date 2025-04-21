@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: backuprestore-sample
 spec:
-  dbUri: "10.244.0.53"
+  dbUri: "10.244.0.72"
   databasePort: 5432
   databaseUser: "admin"
   databasePass: "password"
@@ -18,4 +18,4 @@ spec:
   # s3AccessKey: minio
   # s3SecretKey: minio123
   s3BucketName: test
-  backupRevision: '0'
+  backupRevision: 'mydatabase-2025-04-17-17-52-02-backup.sql'
