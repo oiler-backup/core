@@ -1,0 +1,8 @@
+apiVersion: v2
+name: mysql-adapter
+description: A Helm chart for deploying mysql-adapter for oiler-backup
+
+type: application
+version: 0.1.0
+
+appVersion: "0.0.1"
