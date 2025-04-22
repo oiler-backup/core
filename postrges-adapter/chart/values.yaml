@@ -1,0 +1,12 @@
+sheduler:
+  serviceAccountName: scheduler-sa
+  image: "ashadrinnn/pgad:0.0.1-5"
+  imagePullPolicy: Always
+  name: scheduler
+  namespace: oiler-backup-system
+  port: 50051
+  replicas: 1
+backuper:
+  image: "ashadrinnn/pgbackuper:0.0.1-0"
+restorer:
+  image: "sveb00/pgrestorer:0.0.1-1"
