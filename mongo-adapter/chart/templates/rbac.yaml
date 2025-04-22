@@ -1,0 +1,35 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Values.sheduler.name }}-role
+  namespace: {{ .Values.sheduler.namespace }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "create", "update", "delete"]
+  - apiGroups: ["batch"]
+    resources: ["cronjobs"]
+    verbs: ["get", "list", "watch", "create", "update", "delete"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list", "watch", "create", "update", "delete"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.sheduler.name }}-sa
+  namespace: {{ .Values.sheduler.namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Values.sheduler.name }}-rolebinding
+  namespace: {{ .Values.sheduler.namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.sheduler.name }}-sa
+    namespace: {{ .Values.sheduler.namespace }}
+roleRef:
+  kind: Role
+  name: {{ .Values.sheduler.name }}-role
+  apiGroup: rbac.authorization.k8s.io
