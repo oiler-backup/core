@@ -1,0 +1,31 @@
+model {
+
+    postgres = external-system {
+        title 'Postgres DBMS'
+        style {
+            icon tech:postgresql
+            color green
+            shape storage
+        }
+    }
+}
+
+views {
+    /**
+     * @likec4-generated(v1)
+     * iKRoYXNo2Sg3MDBjM2JkZjkxNjg1N2E3YjZlMGQ3MmZhY2QzMmFmZGY0YmNkYjI2qmF1dG9MYXlvdXSBqWRpcmVjdGlvbqJUQqF40f5ioXnR/vSld2lkdGjNB5amaGVpZ2h0zQO3pW5vZGVzh6lzY2hlZHVsZXKCoWKU0f5iS80BWMy0oWPCqHJlc3RvcmVygqFilM0CHPHNAUjMtKFjwqhiYWNrdXBlcoKhYpTNAiDM5s0BQMy0oWPCr3Jlc3RvcmVyQ3JvbkpvYoKhYpQ28c0BeMy0oWPCr2JhY2t1cGVyQ3JvbkpvYoKhYpQyzObNAX/MtKFjwqJzM4KhYpTNBKzR/vTNAUDMtKFjwqhwb3N0Z3Jlc4KhYpTNBKzNAffNAUDMtKFjwqVlZGdlc4inMWg5dXBuNIOiY3CRgqF4y8BBmZmZmZmaoXnLQF3YeHh4eHmhbIShePiheXKld2lkdGg1pmhlaWdodBKhcJeSzKPMtJLMm8zH
+     * ksyTzNySzI/M8JLMis0BCJLMjc0BIZLMks0BOacxZXphcTFwg6JjcJGCoXjLQH9RmZmZmZqhectAU07dUO3VD6FshKF4zQHioXlMpXdpZHRoTaZoZWlnaHQSoXCUks0CLsy0ks0B6czfks0BmM0BEpLNAVPNAT2nMTJ1aTJzeoOiY3CRgqF4y8BAZmZmZmZnoXnLQGvCXqDLVGOhbIShePiheczlpXdpZHRoNaZoZWlnaHQSoXCXksz4zLSSzQEJzNGSzQEfzPCSzQE5zQEHks0BSc0BFJLNAZjNATSSzQHpzQFTpzE3a3JtdjGDomNwkYKheMtAgDGZmZmZmqF5y0B0Oqd0QQ3aoWyEoXjNAemhec0BQaV3aWR0aE2maGVpZ2h0EqFwl5LNBMJ9ks0EZMyWks0D68y7ks0DiMzwks0DYc0BBZLNAzvNASGSzQMZzQE8pzFkYXMydmuDomNwkYKheMtAjfMzMzMzM6F5y8AySQ09Fs8I
+     * oWyEoXjNBAihedDQpXdpZHRobqZoZWlnaHQSoXCaks0CmMy0ks0CkszRks0Ck8zwks0Cpc0BB5LNAu/NAWSSzQM4zQEfks0Dqc0BQ5LNA7rNAUiSzQPMzQFOks0D3c0BVaZhNDM1dGaDomNwkYKheMtAjYcD8D8D8aF5zJahbISheM0EEaF5S6V3aWR0aGOmaGVpZ2h0EqFwl5LNBSjMtJLNBRbMzpLNBQPM7JLNBPDNAQeSzQTlzQEYks0E2M0BKZLNBMzNATunMWdzNHhmdoOiY3CRgqF4y0CNopdCQ8qqoXnLQHFOZmZmZmahbISheM0EAKF5zQFRpXdpZHRozI2maGVpZ2h0EqFwmpLNA1/Mq5LNA6XMy5LNA/nM7pLNBEbNAQeSzQS/zQEuks0E5M0BHZLNBV3NAUOSzQVtzQFIks0Ffc0BTZLNBY3NAVOmNjBhYWpzg6JjcJGCoXjLQI5wzMzMzM2hectAe5wCLpolQKFshKF4
+     * zQQHoXnNAdCld2lkdGhmpmhlaWdodBKhcJeSzQWgzLSSzQWtzMiSzQW7zNySzQXIzPCSzQXYzQEIks0F6c0BIZLNBfjNATk=
+     */
+    view psql-adapter {
+        title 'PostgreSQL adapter'
+        include scheduler,
+                restorer,
+                backuper,
+                restorerCronJob,
+                backuperCronJob,
+                s3,
+                postgres
+    }
+}

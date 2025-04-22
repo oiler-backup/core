@@ -1,0 +1,32 @@
+model {
+    mongo = external-system {
+        title 'MySQL DBMS'
+        style {
+            icon tech:mongodb
+            color green
+            shape storage
+        }
+    }
+}
+
+views {
+
+    /**
+     * @likec4-generated(v1)
+     * iKRoYXNo2SgzNDk0MjUwOWZhNDQ3MDY4ODUxNWQ4OTA1NGZhYjZlMzRhZjdlOTk0qmF1dG9MYXlvdXSBqWRpcmVjdGlvbqJUQqF40f3doXnR/vmld2lkdGjNCBumaGVpZ2h0zQO3pW5vZGVzh6lzY2hlZHVsZXKCoWKU0f3dXc0BWMy0oWPCqHJlc3RvcmVygqFilM0CCdCrzQFIzLShY8KoYmFja3VwZXKCoWKUzQIJzQErzQFAzLShY8KvcmVzdG9yZXJDcm9uSm9igqFilNDZ0KvNAXjMtKFjwq9iYWNrdXBlckNyb25Kb2KCoWKU0NnNASvNAX/MtKFjwqJzM4KhYpTNBEnR/vnNAUDMtKFjwqVtb25nb4KhYpTNBEnNAfzNAUDMtKFjwqVlZGdlc4inMWg5dXBuNIOiY3CRgqF4y8BjOZmZmZmaoXnLQFr3ArxifdqhbISheNCHoXlhpXdpZHRoNaZoZWlnaHQSoXCXksyjzLSS
+     * zJvMx5LMk8zcksyPzPCSzIrNAQiSzI3NASGSzJLNATmnMWV6YXExcIOiY3CRgqF4y0B9HMzMzMzNoXkFoWyEoXjNAa2heQWld2lkdGhNpmhlaWdodBKhcJSSzQIuzLSSzQHpzN+SzQGYzQESks0BU80BPacxMnVpMnN6g6JjcJGCoXjLwGHDMzMzMzOhectAcLsN9rDfa6FshKF40Iihec0BFKV3aWR0aDWmaGVpZ2h0EqFwl5LM+My0ks0BCczRks0BH8zwks0BOc0BB5LNAUnNARSSzQGYzQE0ks0B6c0BU6cxN2tybXYxg6JjcJGCoXjLQH8czMzMzM2hec0BhaFshKF4zQGxoXnNAYWld2lkdGhNpmhlaWdodBKhcJeSzQTCfZLNBGTMlpLNA+vMu5LNA4jM8JLNA2HNAQWSzQM7zQEhks0DGc0BPKcxZGFzMnZrg6JjcJGCoXjLQIzbMzMzMzOhecvAUUv+kV1y7qFshKF4zQPN
+     * oXnQq6V3aWR0aG6maGVpZ2h0EqFwmpLNApjMtJLNApLM0ZLNApPM8JLNAqXNAQeSzQLvzQFkks0DOM0BH5LNA6nNAUOSzQO6zQFIks0DzM0BTpLNA93NAVWmYTQzNXRmg6JjcJGCoXjLQIxZ2byVaMWhectAZwzMzMzMzaFshKF4zQPWoXlupXdpZHRoY6ZoZWlnaHQSoXCXks0FKMy0ks0FFszOks0FA8zsks0E8M0BB5LNBOXNARiSzQTYzQEpks0EzM0BO6ZscHZqeXODomNwkYKheMtAi9qZ2+jcV6F5y0BrXMzMzMzMoWyEoXjNA8uhec0BLqV3aWR0aMyNpmhlaWdodBKhcJqSzQNfzKuSzQOlzMuSzQP5zO6SzQRGzQEHks0Ev80BLpLNBOTNAR2SzQVdzQFDks0Fbc0BSJLNBX3NAU2SzQWNzQFTpzFsMnhoZzeDomNwkYKheM0DqKF5y0B9wFHrhR65oWyEoXjNA8qhec0B
+     * 6aV3aWR0aGamaGVpZ2h0EqFwl5LNBaDMtJLNBa3MyJLNBbvM3JLNBcjM8JLNBdjNAQiSzQXpzQEhks0F+M0BOQ==
+     */
+    view mongo-adapter {
+        title 'MongoDB adapter'
+        include scheduler,
+                restorer,
+                backuper,
+                restorerCronJob,
+                backuperCronJob,
+                s3,
+                mongo
+    }
+
+}

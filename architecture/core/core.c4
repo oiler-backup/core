@@ -1,0 +1,55 @@
+model {
+    operator = kubernetes-resource {
+        #oiler-component
+        title 'Operator core'
+
+        -[watches]-> backupRequest 'Watches'
+        -[watches]-> restoreRequest 'Watches'
+        -> s3CleanerCronJob 'Runs'
+        -> scheduler 'delegates-to'
+    }
+
+    backupRequest = kubernetes-resource {
+        #oiler-component
+        title 'BackupRequest CRD'
+    }
+
+    restoreRequest = kubernetes-resource {
+        #oiler-component
+        title 'BackupRestore CRD'
+    }
+
+    s3Cleaner = application {
+        #oiler-component
+        title 'Cleaner for S3'
+
+        -[runs-in]-> s3CleanerCronJob
+    }
+
+    s3CleanerCronJob = kubernetes-resource {
+        title 'CronJob for S3'
+    }
+}
+
+views {
+    /**
+     * @likec4-generated(v1)
+     * iKRoYXNo2SgyOTNmOGNjYTBlNjdmOWJlZGY1NjBkMDMyODEzMGIxZjgzMmQyZDhiqmF1dG9MYXlvdXSBqWRpcmVjdGlvbqJUQqF4CKF5DqV3aWR0aM0G76ZoZWlnaHTNAlalbm9kZXOHqXMzQ2xlYW5lcoKhYpTNBTfNAYjNAUDMtKFjwqRAZ3IxgqFilAgOzQUEzQJWoWPDsHMzQ2xlYW5lckNyb25Kb2KCoWKUzQU3Rc0BQMy0oWPCqG9wZXJhdG9ygqFilM0B3kXNAUDMtKFjwq5yZXN0b3JlUmVxdWVzdIKhYpQwzQGIzQFAzLShY8KtYmFja3VwUmVxdWVzdIKhYpTNAd7NAYjNAUDMtKFjwqlzY2hlZHVsZXKCoWKUzQOMzQGIzQFYzLShY8KlZWRnZXOFpmoxcjV5NYKiY3CRgqF4zQXXoXnLQHXRmZmZmZqhcJSSzQaSzQHiks0Gs80B4pLNBtXNAeKSzQb2zQHipml6ejht
+     * boOiY3CRgqF4y0CN+MzMzMzNoXnMn6FshKF4zQQqoXnMn6V3aWR0aCWmaGVpZ2h0EqFwl5LNAx7MuJLNA/bM25LNBYLNASOSzQbJzQGIks0G2M0BjZLNBufNAZKSzQb3zQGXpzF1NGZ1Y3qCoWyEoXjNAauhec0BPqV3aWR0aDqmaGVpZ2h0EqFwlJLNAgfM+ZLNAc7NASSSzQGJzQFXks0BT80BgqU0dmNxZIKhbISheM0CfqF5zQE8pXdpZHRoOqZoZWlnaHQSoXCUks0Cfsz5ks0Cfs0BIpLNAn7NAVOSzQJ+zQF+pzFzMTJ0MzGCoWyEoXjNA1ehec0BPqV3aWR0aFGmaGVpZ2h0EqFwlJLNAvnM+ZLNAzPNASSSzQN6zQFXks0Dtc0Bgg==
+     */
+    view core {
+        title 'Operator Core'
+        include s3Cleaner,
+                s3CleanerCronJob
+        group 'Main flow' {
+            color red
+            opacity 40%
+            include operator,
+                    restoreRequest,
+                    backupRequest,
+                    scheduler with {
+                        navigateTo adapter-index
+                    }
+        }
+    }
+}

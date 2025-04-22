@@ -1,0 +1,27 @@
+model {
+    mongo-adapter = adapter {
+        title 'Adapter for MongoDB'
+
+    }
+    mysql-adapter = adapter {
+        title 'Adapter for MySQL'
+    }
+    psql-adapter = adapter {
+        title 'Adapter for PostrgreSQL'
+    }
+}
+
+views {
+    view adapter-index {
+        title 'Adapters index page'
+        include mongo-adapter with {
+                    navigateTo mongo-adapter
+                },
+                psql-adapter with {
+                    navigateTo psql-adapter
+                },
+                mysql-adapter with {
+                    navigateTo mysql-adapter
+                }
+    }
+}

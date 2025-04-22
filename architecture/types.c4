@@ -1,0 +1,115 @@
+specification {
+    tag oiler-component
+
+    element adapter {
+        notation 'Oiler Adapter'
+        style {
+            color gray
+        }
+    }
+
+    element application {
+        notation 'Application'
+        technology 'Golang'
+        style {
+            color indigo
+        }
+    }
+
+    element kubernetes-resource {
+        notation 'Kubernetes internal resource'
+        technology 'Kubernetes'
+        style {
+            color green
+        }
+    }
+
+    element external-system {
+        notation 'External system'
+        style {
+            color amber
+        }
+    }
+
+    element helm-chart {
+        notation 'Helm chart for adapter'
+        style {
+            color green
+        }
+    }
+
+    relationship runs-in {
+        notation "Application running in some kubernetes resource"
+    }
+
+    relationship creates {
+        notation "Something create something else"
+    }
+
+    relationship watches {
+        notation "Watches for something"
+    }
+
+}
+
+model {
+    s3 = external-system {
+        title 'S3-Compatible Storage'
+        description 'A place where backups are stored'
+    }
+
+        backuper = application {
+        #oiler-component
+        title 'Backuper component'
+        description 'Performs backup'
+        style {
+            icon tech:go
+        }
+        -[runs-in]-> backuperCronJob 'Runs inside'
+        -> s3 'Saves backups'
+        -> postgres 'Creates backup'
+        -> mysql 'Creates backup'
+        -> mongo 'Creates backup'
+    }
+
+    restorer = application {
+        #oiler-component
+        title 'Restorer component'
+        description 'Performs by-hand restore from backup'
+        style {
+            icon tech:go
+        }
+        -[runs-in]-> restorerCronJob 'Runs inside'
+        -> s3 'Fetches backups'
+        -> postgres 'Restores from backup'
+        -> mysql 'Restores from backup'
+        -> mongo 'Restores from backup'
+    }
+
+    scheduler = application {
+        #oiler-component
+        title 'Scheduler'
+        description 'Controls backup and restore jobs creation'
+        style {
+            icon tech:go
+        }
+        -[creates]-> backuperCronJob 'Creates'
+        -[creates]-> restorerCronJob 'Creates'
+    }
+
+    restorerCronJob = kubernetes-resource {
+        title 'Restorer Kubernetes CronJob'
+        description 'Is used to schedule tasks for restoration'
+        style {
+            icon tech:kubernetes
+        }
+    }
+
+    backuperCronJob = kubernetes-resource {
+        title 'Backuper Kubernetes CronJob'
+        description 'Is used to schedule tasks for backup'
+        style {
+            icon tech:kubernetes
+        }
+    }
+}

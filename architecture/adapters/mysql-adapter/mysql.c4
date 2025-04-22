@@ -1,0 +1,30 @@
+model {
+    mysql = external-system {
+        title 'MySQL DBMS'
+        style {
+            icon tech:mysql
+            color green
+            shape storage
+        }
+    }
+}
+
+views {
+    /**
+     * @likec4-generated(v1)
+     * iKRoYXNo2Sg1YTVlYWFmZjQ2ZmZkZDAwNTRkNzkyMDY0ZDI4ZWVkYTI5ZmRhYzc5qmF1dG9MYXlvdXSBqWRpcmVjdGlvbqJUQqF40f6doXnR/uuld2lkdGjNB1umaGVpZ2h0zQK2pW5vZGVzh6lzY2hlZHVsZXKCoWKU0f6dGM0BWMy0oWPCqHJlc3RvcmVygqFilM0CK9H/Zs0BSMy0oWPCqGJhY2t1cGVygqFilM0CK8y/zQFAzLShY8KvcmVzdG9yZXJDcm9uSm9igqFilFTR/2bNAXjMtKFjwq9iYWNrdXBlckNyb25Kb2KCoWKUUMy/zQF/zLShY8KiczOCoWKUzQQf0f7rzQFAzLShY8KlbXlzcWyCoWKUzQQfzO3NAUDMtKFjwqVlZGdlc4inMWg5dXBuNIOiY3CRgqF4y0AxgAAAAAAAoXnLQEHIBIBIBIChbISheCWheRyld2lkdGg1pmhlaWdodBKhcJeSzKPMtJLMm8zH
+     * ksyTzNySzI/M8JLMis0BCJLMjc0BIZLMks0BOacxZXphcTFwg6JjcJGCoXjLQIB0AAAAAAChedDAoWyEoXjNAfyhedDApXdpZHRoTaZoZWlnaHQSoXCUks0CLsy0ks0B6czfks0BmM0BEpLNAVPNAT2nMTJ1aTJzeoOiY3CRgqF4y0AwTMzMzMzNoXnLQGdnXVTh+nuhbISheCKheczCpXdpZHRoNaZoZWlnaHQSoXCXksz4zLSSzQEJzNGSzQEfzPCSzQE5zQEHks0BSc0BFJLNAZjNATSSzQHpzQFTpzE3a3JtdjGDomNwkYKheMtAgHszMzMzM6F5zQEZoWyEoXjNAf2hec0BGaV3aWR0aE2maGVpZ2h0EqFwl5LNBMJ9ks0EZMyWks0D68y7ks0DiMzwks0DYc0BBZLNAzvNASGSzQMZzQE8pzFkYXMydmuDomNwkYKheMtAjTTMzMzMzaF5y8BdXcfYXH2FoWyEoXjNA8mhedCC
+     * pXdpZHRobqZoZWlnaHQSoXCaks0CmMy0ks0CkszRks0Ck8zwks0Cpc0BB5LNAu/NAWSSzQM4zQEfks0Dqc0BQ5LNA7rNAUiSzQPMzQFOks0D3c0BVaZhNDM1dGaDomNwkYKheMtAjDuxOxOxO6F5y0BaJmZmZmZnoWyEoXjNA8WheS+ld2lkdGhjpmhlaWdodBKhcJeSzQUozLSSzQUWzM6SzQUDzOySzQTwzQEHks0E5c0BGJLNBNjNASmSzQTMzQE7pmxwbndxeYOiY3CRgqF4y0CMi716sllOoXnLQFZTMzMzMzOhbISheM0Dx6F5zISld2lkdGjMjaZoZWlnaHQSoXCaks0DX8yrks0DpczLks0D+czuks0ERs0BB5LNBL/NAS6SzQTkzQEdks0FXc0BQ5LNBW3NAUiSzQV9zQFNks0Fjc0BU6cxbDJzbHZ0g6JjcJGCoXjNA6GhectAcssCDEm6XqFshKF4zQPFoXnNAS+ld2lk
+     * dGhmpmhlaWdodBKhcJeSzQWgzLSSzQWtzMiSzQW7zNySzQXIzPCSzQXYzQEIks0F6c0BIZLNBfjNATk=
+     */
+    view mysql-adapter {
+        title 'MySQL adapter'
+        include scheduler,
+                restorer,
+                backuper,
+                restorerCronJob,
+                backuperCronJob,
+                s3,
+                mysql
+    }
+}
