@@ -109,6 +109,13 @@ func (r *BackupRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 	}
 
+	_, err = r.createHealthCheckJob(ctx, &backupRestore, OperatorNamespace)
+	if err != nil {
+		log.Error(err, "Failed to create cleanupJob")
+		r.mustSetFailed(ctx, req.NamespacedName)
+		return ctrl.Result{}, err
+	}
+
 	backupRestore.Status.Status = StatusSuccess
 	if err := r.Status().Update(ctx, &backupRestore); err != nil {
 		log.Error(err, "Unable to update BackupRestore status")
@@ -118,6 +125,82 @@ func (r *BackupRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	log.Info("Successfully created all resources")
 	return ctrl.Result{}, nil
+}
+
+func (r *BackupRestoreReconciler) createHealthCheckJob(ctx context.Context, req *backupv1.BackupRestore, ns string) (*batchv1.CronJob, error) {
+	healthCheckCronJob := &batchv1.CronJob{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      fmt.Sprintf("healthcheck-%s", req.Spec.DatabaseName),
+			Namespace: ns,
+			OwnerReferences: []metav1.OwnerReference{
+				{
+					APIVersion:         req.APIVersion,
+					Kind:               req.Kind,
+					Name:               req.Name,
+					UID:                req.UID,
+					BlockOwnerDeletion: func() *bool { b := true; return &b }(),
+				},
+			},
+		},
+		Spec: batchv1.CronJobSpec{
+			Schedule: "*/5 * * * *", // Запуск каждые 5 минут
+			JobTemplate: batchv1.JobTemplateSpec{
+				Spec: batchv1.JobSpec{
+					Template: corev1.PodTemplateSpec{
+						Spec: corev1.PodSpec{
+							Containers: []corev1.Container{
+								{
+									Name:            "healthcheck-job",
+									Image:           "ex/healthchecker:0.0.1-0", // Используем образ для проверки состояния
+									ImagePullPolicy: corev1.PullAlways,
+									Env: []corev1.EnvVar{
+										{
+											Name:  "DB_HOST",
+											Value: req.Spec.DatabaseURI,
+										},
+										{
+											Name:  "DB_PORT",
+											Value: fmt.Sprint(req.Spec.DatabasePort),
+										},
+										{
+											Name:  "DB_USER",
+											Value: req.Spec.DatabaseUser,
+										},
+										{
+											Name:  "DB_PASSWORD",
+											Value: req.Spec.DatabasePass,
+										},
+										{
+											Name:  "DB_NAME",
+											Value: req.Spec.DatabaseName,
+										},
+										{
+											Name:  "MAX_ATTEMPTS",
+											Value: "3", // Максимальное количество попыток
+										},
+										{
+											Name:  "ATTEMPT_INTERVAL",
+											Value: "5m", // Интервал между попытками
+										},
+									},
+								},
+							},
+							RestartPolicy: corev1.RestartPolicyOnFailure,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	err := r.Create(ctx, healthCheckCronJob)
+	if apierrors.IsAlreadyExists(err) {
+		return healthCheckCronJob, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	return healthCheckCronJob, nil
 }
 
 func (r *BackupRestoreReconciler) delegateToController(ctx context.Context, controllerAddress string, backupRestore *backupv1.BackupRestore) (*batchv1.Job, error) {

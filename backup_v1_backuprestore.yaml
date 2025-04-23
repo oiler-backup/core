@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: backuprestore-sample
 spec:
-  dbUri: "10.244.0.72"
+  dbUri: "10.244.0.91"
   databasePort: 5432
   databaseUser: "admin"
   databasePass: "password"
