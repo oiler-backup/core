@@ -1,0 +1,110 @@
+name: Docker Build and Push
+
+on:
+  push:
+    branches:
+      - main # Триггерится только при пуше в ветку main
+    paths:
+      # Триггер для postgres-adapter
+      - "postgres-adapter/restorer/**"
+      - "postgres-adapter/backuper/**"
+      - "postgres-adapter/scheduler/**"
+      # Триггер для mongo-adapter
+      - "mongo-adapter/restorer/**"
+      - "mongo-adapter/backuper/**"
+      - "mongo-adapter/scheduler/**"
+      # Триггер для mysql-adapter
+      - "mysql-adapter/restorer/**"
+      - "mysql-adapter/backuper/**"
+      - "mysql-adapter/scheduler/**"
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Шаг 1: Выполнить вход в Docker Hub
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+      # Шаг 2: Определить измененные папки
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Determine changed folders
+        id: changed-folders
+        run: |
+          # Получаем список измененных файлов
+          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
+          echo "Changed files: $CHANGED_FILES"
+
+          # Определяем уникальные папки
+          declare -A FOLDERS
+          for file in $CHANGED_FILES; do
+            folder=$(echo "$file" | cut -d'/' -f1,2)
+            FOLDERS["$folder"]=1
+          done
+
+          # Формируем строку с уникальными папками
+          FOLDER_LIST=""
+          for folder in "${!FOLDERS[@]}"; do
+            FOLDER_LIST+="$folder "
+          done
+
+          echo "Changed folders: $FOLDER_LIST"
+          echo "folders=$FOLDER_LIST" >> $GITHUB_ENV
+
+      # Шаг 3: Сборка и пуш Docker-образов
+      - name: Build and push Docker images
+        run: |
+          # Проходим по всем измененным папкам
+          for folder in ${{ env.folders }}; do
+            echo "Processing folder: $folder"
+
+            # Определяем имя образа на основе папки
+            case $folder in
+              postgres-adapter/restorer)
+                IMAGE_NAME="pgrestorer"
+                ;;
+              postgres-adapter/backuper)
+                IMAGE_NAME="pgbackuper"
+                ;;
+              postgres-adapter/scheduler)
+                IMAGE_NAME="pgad"
+                ;;
+              mongo-adapter/restorer)
+                IMAGE_NAME="mongorestorer"
+                ;;
+              mongo-adapter/backuper)
+                IMAGE_NAME="mongobackuper"
+                ;;
+              mongo-adapter/scheduler)
+                IMAGE_NAME="mongoad"
+                ;;
+              mysql-adapter/restorer)
+                IMAGE_NAME="mysqlrestorer"
+                ;;
+              mysql-adapter/backuper)
+                IMAGE_NAME="mysqlbackuper"
+                ;;
+              mysql-adapter/scheduler)
+                IMAGE_NAME="mysqlad"
+                ;;
+              *)
+                echo "Unknown folder: $folder"
+                continue
+                ;;
+            esac
+
+            # Собираем Docker-образ
+            docker build -t $IMAGE_NAME:latest $folder
+
+            # Пушим Docker-образ в Docker Hub
+            docker tag $IMAGE_NAME:latest ${{ secrets.DOCKER_HUB_USERNAME }}/$IMAGE_NAME:latest
+            docker push ${{ secrets.DOCKER_HUB_USERNAME }}/$IMAGE_NAME:latest
+
+            echo "Successfully built and pushed image: $IMAGE_NAME"
+          done
