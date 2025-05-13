@@ -22,19 +22,18 @@ import (
 	"fmt"
 	"os"
 
+	backupv1 "github.com/AntonShadrinNN/oiler-backup/api/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	batchv1 "k8s.io/api/batch/v1"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	backupv1 "github.com/AntonShadrinNN/oiler-backup/api/v1"
-	batchv1 "k8s.io/api/batch/v1"
-	corev1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -169,6 +168,7 @@ func (r *BackupRequestReconciler) delegateToController(ctx context.Context, cont
 		S3AccessKey:  backupRequest.Spec.S3AccessKey,
 		S3SecretKey:  backupRequest.Spec.S3SecretKey,
 		S3BucketName: backupRequest.Spec.S3BucketName,
+		CoreAddr:     os.Getenv("CORE_ADDR"),
 	}
 
 	resp, err := client.Backup(ctx, req)
@@ -312,7 +312,6 @@ func (r *BackupRequestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if exists {
 		OperatorNamespace = operatorNamespace
 	}
-
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&backupv1.BackupRequest{}).
 		Named("backuprequest").

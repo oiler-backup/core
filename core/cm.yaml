@@ -4,4 +4,4 @@ metadata:
   name: database-config
   namespace: oiler-backup-system
 data:
-  postgres: "10.102.243.113:50051"
+  postgres: "scheduler-service.oiler-backup-system.svc.cluster.local:50051"
