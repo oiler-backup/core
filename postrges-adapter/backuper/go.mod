@@ -9,12 +9,14 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.29.14 // indirect
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.79.3 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/zap v1.27.0 // indirect
 	google.golang.org/grpc v1.72.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 )
 
 require (
-	github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250513203956-54e7462d8d69
+	github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250513205945-203c5af65f47
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.10 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.67 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.30 // indirect
