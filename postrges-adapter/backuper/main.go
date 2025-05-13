@@ -12,6 +12,8 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+	grpc "google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -25,6 +27,7 @@ func main() {
 	dbUser := os.Getenv("DB_USER")
 	dbPassword := os.Getenv("DB_PASSWORD")
 	dbName := os.Getenv("DB_NAME")
+	coreAddr := os.Getenv("CORE_ADDR")
 	backupPath := "/tmp/backup.sql"
 
 	s3Endpoint := os.Getenv("S3_ENDPOINT")
@@ -32,9 +35,11 @@ func main() {
 	s3SecretKey := os.Getenv("S3_SECRET_KEY")
 	s3BucketName := os.Getenv("S3_BUCKET_NAME")
 
+	backupName := fmt.Sprintf("%s:%s/%s", dbHost, dbPort, dbName)
 	if dbHost == "" || dbPort == "" || dbUser == "" || dbPassword == "" || dbName == "" ||
-		s3Endpoint == "" || s3AccessKey == "" || s3SecretKey == "" || s3BucketName == "" {
-		log.Fatal("Envs DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET_NAME are required")
+		s3Endpoint == "" || s3AccessKey == "" || s3SecretKey == "" || s3BucketName == "" || coreAddr == "" {
+		log.Fatal("Envs DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET_NAME, CORE_ADDR are required")
+		reportStatus(ctx, coreAddr, backupName, false, -1)
 	}
 
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
@@ -43,12 +48,14 @@ func main() {
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
+		reportStatus(ctx, coreAddr, backupName, false, -1)
 	}
 	defer db.Close()
 
 	err = db.PingContext(ctx)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
+		reportStatus(ctx, coreAddr, backupName, false, -1)
 	}
 	log.Println("Connection to database successful")
 
@@ -65,6 +72,7 @@ func main() {
 	output, err := dumpCmd.CombinedOutput()
 	if err != nil {
 		log.Fatalf("Failed executing pg_dump: %v\n%s", err, string(output))
+		reportStatus(ctx, coreAddr, backupName, false, -1)
 	}
 	log.Printf("Backup created successfully: %s\n", backupPath)
 
@@ -72,7 +80,10 @@ func main() {
 	err = uploadToS3(ctx, s3Endpoint, s3AccessKey, s3SecretKey, s3BucketName, backupPath, fmt.Sprintf("%s-%s-backup.sql", dbName, dateNow))
 	if err != nil {
 		log.Fatalf("Failed to upload backup to MinIO: %v", err)
+		reportStatus(ctx, coreAddr, backupName, false, -1)
 	}
+
+	reportStatus(ctx, coreAddr, backupName, true, time.Now().Unix())
 	log.Println("Backup successfully loaded to MinIO")
 }
 
@@ -117,5 +128,38 @@ func uploadToS3(ctx context.Context, endpoint, accessKey, secretKey, bucketName,
 		return fmt.Errorf("failed to load file to S3: %w", err)
 	}
 
+	return nil
+}
+
+func reportStatus(ctx context.Context, coreAddr string, name string, success bool, timeStamp int64) error {
+	log.Println("Reporting status")
+	conn, err := grpc.NewClient(
+		coreAddr,
+		grpc.WithTransportCredentials(
+			insecure.NewCredentials(),
+		),
+	)
+
+	if err != nil {
+		log.Println("Failed to connect to core: %w", err)
+		return fmt.Errorf("failed to connect to %s: %w", coreAddr, err)
+	}
+	defer conn.Close()
+
+	client := NewBackupMetricsServiceClient(conn)
+
+	req := BackupMetrics{
+		BackupName: name,
+		Success:    success,
+		Timestamp:  timeStamp,
+	}
+
+	_, err = client.ReportSuccessfulBackup(ctx, &req)
+	if err != nil {
+		log.Println("Failed to report status: %w", err)
+		return err
+	}
+
+	log.Println("Status Reported Successfully")
 	return nil
 }

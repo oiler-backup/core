@@ -19,6 +19,8 @@ message BackupRequest {
   string s3_access_key = 10;   // Access Key для MinIO
   string s3_secret_key = 11;   // Secret Key для MinIO
   string s3_bucket_name = 12;  // Имя бакета в MinIO
+
+  string core_addr = 13; // Адрес core
 }
 
 message BackupResponse {
