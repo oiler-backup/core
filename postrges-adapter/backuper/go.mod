@@ -1,18 +1,22 @@
 module backuper
 
-go 1.24.1
+go 1.24.2
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.36.3
 	github.com/aws/aws-sdk-go-v2/config v1.29.12
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.78.2
-	github.com/golang/protobuf v1.5.4
 	github.com/lib/pq v1.10.9
-	google.golang.org/grpc v1.72.0
-	google.golang.org/protobuf v1.36.6
 )
 
 require (
+	github.com/golang/protobuf v1.5.4 // indirect
+	google.golang.org/grpc v1.72.0 // indirect
+	google.golang.org/protobuf v1.36.6 // indirect
+)
+
+require (
+	github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250513195553-db41147476f6
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.10 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.65 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.30 // indirect
