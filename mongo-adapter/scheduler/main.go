@@ -125,6 +125,10 @@ func (s *BackupServer) createCronJob(req *BackupRequest) (string, string, error)
 											Name:  "BACKUP_PATH",
 											Value: "./backup.sql",
 										},
+										{
+											Name:  "CORE_ADDR",
+											Value: req.CoreAddr,
+										},
 									},
 								},
 							},
