@@ -2,7 +2,11 @@ module backuper
 
 go 1.24.2
 
-require github.com/lib/pq v1.10.9
+require (
+	github.com/caarlos0/env/v11 v11.3.1
+	github.com/lib/pq v1.10.9
+	go.uber.org/zap v1.27.0
+)
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.36.3 // indirect
@@ -10,7 +14,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.79.3 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
-	go.uber.org/zap v1.27.0 // indirect
 	google.golang.org/grpc v1.72.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 )
