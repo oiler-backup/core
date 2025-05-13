@@ -65,6 +65,9 @@ spec:
           - --health-probe-bind-address=:8081
         image: controller:latest
         imagePullPolicy: Always
+        env:
+          - name: "CORE_ADDR"
+            value: "oiler-backup-controller-manager.oiler-backup-system.svc.cluster.local:50051"
         name: manager
         securityContext:
           allowPrivilegeEscalation: false
@@ -94,3 +97,21 @@ spec:
             memory: 64Mi
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: controller-manager
+  namespace: system
+  labels:
+    control-plane: controller-manager
+    app.kubernetes.io/name: oiler-backup
+    app.kubernetes.io/managed-by: kustomize
+spec:
+  selector:
+    control-plane: controller-manager
+  ports:
+    - protocol: TCP
+      port: 50051
+      targetPort: 50051
+  type: ClusterIP

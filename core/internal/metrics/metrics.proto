@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package backupmetrics;
+option go_package = "./";
+
+import "google/protobuf/empty.proto";
+
+service BackupMetricsService {
+    rpc ReportSuccessfulBackup (BackupMetrics) returns (google.protobuf.Empty);
+}
+
+message BackupMetrics {
+    string backup_name = 1;
+    bool success = 2;
+    int64 timestamp = 3;
+}
