@@ -2,11 +2,9 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"database/sql"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"os/exec"
 	"time"
@@ -14,9 +12,11 @@ import (
 	_ "github.com/lib/pq"
 
 	metricsbase "github.com/AntonShadrinNN/oiler-backup-base/metrics"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
+	s3base "github.com/AntonShadrinNN/oiler-backup-base/s3"
+)
+
+const (
+	S3REGION = "us-east-1" // Fictious
 )
 
 func main() {
@@ -33,9 +33,19 @@ func main() {
 	s3AccessKey := os.Getenv("S3_ACCESS_KEY")
 	s3SecretKey := os.Getenv("S3_SECRET_KEY")
 	s3BucketName := os.Getenv("S3_BUCKET_NAME")
+	backupName := fmt.Sprintf("%s:%s/%s", dbHost, dbPort, dbName)
 
 	metricsReporter := metricsbase.NewMetricsReporter(coreAddr, false)
-	backupName := fmt.Sprintf("%s:%s/%s", dbHost, dbPort, dbName)
+	s3Uploader, err := s3base.NewS3Uploader(ctx, s3Endpoint, s3AccessKey, s3SecretKey, S3REGION, false)
+	if err != nil {
+		log.Printf("Failed to initialize s3Uploder: %w", err)
+		err := metricsReporter.ReportStatus(ctx, backupName, false, -1)
+		if err != nil {
+			log.Fatalf("Failed to report metric %w\n", err)
+		}
+		os.Exit(1)
+	}
+
 	if dbHost == "" || dbPort == "" || dbUser == "" || dbPassword == "" || dbName == "" ||
 		s3Endpoint == "" || s3AccessKey == "" || s3SecretKey == "" || s3BucketName == "" || coreAddr == "" {
 		log.Println("Envs DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET_NAME, CORE_ADDR are required")
@@ -93,7 +103,17 @@ func main() {
 	log.Printf("Backup created successfully: %s\n", backupPath)
 
 	dateNow := time.Now().Format("2006-01-02-15-04-05")
-	err = uploadToS3(ctx, s3Endpoint, s3AccessKey, s3SecretKey, s3BucketName, backupPath, fmt.Sprintf("%s-%s-backup.sql", dbName, dateNow))
+	backupFile, err := os.Open(backupPath)
+	if err != nil {
+		log.Printf("Failed to open backupFile: %w", err)
+		err := metricsReporter.ReportStatus(ctx, backupName, false, -1)
+		if err != nil {
+			log.Fatalf("Failed to report metric %w\n", err)
+		}
+		os.Exit(1)
+	}
+	defer backupFile.Close()
+	err = s3Uploader.Upload(ctx, s3BucketName, fmt.Sprintf("%s-%s-backup.sql", dbName, dateNow), backupFile)
 	if err != nil {
 		log.Printf("Failed to upload backup to MinIO: %v\n", err)
 		err := metricsReporter.ReportStatus(ctx, backupName, false, -1)
@@ -107,48 +127,4 @@ func main() {
 		log.Fatalf("Failed to report metric %w\n", err)
 	}
 	log.Println("Backup successfully loaded to MinIO")
-}
-
-func uploadToS3(ctx context.Context, endpoint, accessKey, secretKey, bucketName, filePath, objectKey string) error {
-	cfg, err := config.LoadDefaultConfig(ctx,
-		config.WithRegion("us-east-1"),
-		config.WithCredentialsProvider(aws.CredentialsProviderFunc(func(ctx context.Context) (aws.Credentials, error) {
-			return aws.Credentials{
-				AccessKeyID:     accessKey,
-				SecretAccessKey: secretKey,
-			}, nil
-		})),
-	)
-	if err != nil {
-		log.Fatalf("Failure during AWS SDK configuration: %v", err)
-	}
-
-	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.UsePathStyle = true
-		o.BaseEndpoint = aws.String(endpoint)
-		o.HTTPClient = &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: true,
-				},
-			},
-		}
-	})
-
-	file, err := os.Open(filePath)
-	if err != nil {
-		return fmt.Errorf("failure during opening file: %w", err)
-	}
-	defer file.Close()
-
-	_, err = client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket: aws.String(bucketName),
-		Key:    aws.String(objectKey),
-		Body:   file,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to load file to S3: %w", err)
-	}
-
-	return nil
 }
