@@ -83,7 +83,9 @@ func (s *BackupServer) Backup(ctx context.Context, req *pb.BackupRequest) (*pb.B
 				S3BucketName: req.S3BucketName,
 				CoreAddr:     req.CoreAddr,
 			},
-			envgetters.BackuperEnvGetter{},
+			envgetters.BackuperEnvGetter{
+				MaxBackupCount: int(req.MaxBackupCount),
+			},
 		}),
 	)
 	name, namespace, err := s.jobsCreator.CreateCronJob(ctx, cj)

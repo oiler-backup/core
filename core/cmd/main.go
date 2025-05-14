@@ -24,7 +24,7 @@ import (
 	"net"
 	"os"
 
-	pb "github.com/AntonShadrinNN/oiler-backup/internal/metrics"
+	pb "github.com/AntonShadrinNN/oiler-backup-base/proto"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.

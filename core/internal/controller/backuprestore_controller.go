@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 
+	pb "github.com/AntonShadrinNN/oiler-backup-base/proto"
 	grpc "google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	batchv1 "k8s.io/api/batch/v1"
@@ -132,9 +133,9 @@ func (r *BackupRestoreReconciler) delegateToController(ctx context.Context, cont
 	}
 	defer conn.Close()
 
-	client := NewBackupServiceClient(conn)
+	client := pb.NewBackupServiceClient(conn)
 
-	req := &BackupRestore{
+	req := &pb.BackupRestore{
 		DbUri:          backupRestore.Spec.DatabaseURI,
 		DbPort:         int64(backupRestore.Spec.DatabasePort),
 		DbUser:         backupRestore.Spec.DatabaseUser,
