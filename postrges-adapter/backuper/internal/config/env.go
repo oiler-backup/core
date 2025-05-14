@@ -14,7 +14,8 @@ type Config struct {
 	S3SecretKey  string `env:"S3_SECRET_KEY,required,notEmpty,unset"`
 	S3BucketName string `env:"S3_BUCKET_NAME,required,notEmpty"`
 
-	Secure bool `env:"SECURE" envDefault:"false"`
+	MaxBackupCount int  `env:"MAX_BACKUP_COUNT"`
+	Secure         bool `env:"SECURE" envDefault:"false"`
 }
 
 func GetConfig() (Config, error) {

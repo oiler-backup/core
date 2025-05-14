@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"os"
 
+	pb "github.com/AntonShadrinNN/oiler-backup-base/proto"
 	backupv1 "github.com/AntonShadrinNN/oiler-backup/api/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -122,13 +123,6 @@ func (r *BackupRequestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 	}
 
-	_, err = r.createCleanupJob(ctx, &backupRequest, OperatorNamespace)
-	if err != nil {
-		log.Error(err, "Failed to create cleanupJob")
-		r.mustSetFailed(ctx, req.NamespacedName)
-		return ctrl.Result{}, err
-	}
-
 	backupRequest.Status.Status = StatusSuccess
 	if err := r.Status().Update(ctx, &backupRequest); err != nil {
 		log.Error(err, "Unable to update BackupRequest status")
@@ -153,22 +147,23 @@ func (r *BackupRequestReconciler) delegateToController(ctx context.Context, cont
 	}
 	defer conn.Close()
 
-	client := NewBackupServiceClient(conn)
+	client := pb.NewBackupServiceClient(conn)
 
-	req := &BackupRequest{
-		DbUri:        backupRequest.Spec.DatabaseURI,
-		DbPort:       int64(backupRequest.Spec.DatabasePort),
-		DbUser:       backupRequest.Spec.DatabaseUser,
-		DbPass:       backupRequest.Spec.DatabasePass,
-		DbName:       backupRequest.Spec.DatabaseName,
-		DatabaseType: backupRequest.Spec.DatabaseType,
-		Schedule:     backupRequest.Spec.Schedule,
-		StorageClass: backupRequest.Spec.StorageClass,
-		S3Endpoint:   backupRequest.Spec.S3Endpoint,
-		S3AccessKey:  backupRequest.Spec.S3AccessKey,
-		S3SecretKey:  backupRequest.Spec.S3SecretKey,
-		S3BucketName: backupRequest.Spec.S3BucketName,
-		CoreAddr:     os.Getenv("CORE_ADDR"),
+	req := &pb.BackupRequest{
+		DbUri:          backupRequest.Spec.DatabaseURI,
+		DbPort:         int64(backupRequest.Spec.DatabasePort),
+		DbUser:         backupRequest.Spec.DatabaseUser,
+		DbPass:         backupRequest.Spec.DatabasePass,
+		DbName:         backupRequest.Spec.DatabaseName,
+		DatabaseType:   backupRequest.Spec.DatabaseType,
+		Schedule:       backupRequest.Spec.Schedule,
+		StorageClass:   backupRequest.Spec.StorageClass,
+		S3Endpoint:     backupRequest.Spec.S3Endpoint,
+		S3AccessKey:    backupRequest.Spec.S3AccessKey,
+		S3SecretKey:    backupRequest.Spec.S3SecretKey,
+		S3BucketName:   backupRequest.Spec.S3BucketName,
+		CoreAddr:       os.Getenv("CORE_ADDR"),
+		MaxBackupCount: backupRequest.Spec.MaxBackupCount,
 	}
 
 	resp, err := client.Backup(ctx, req)
@@ -192,78 +187,6 @@ func (r *BackupRequestReconciler) delegateToController(ctx context.Context, cont
 	}
 
 	return &cronJob, nil
-}
-
-func (r *BackupRequestReconciler) createCleanupJob(ctx context.Context, req *backupv1.BackupRequest, ns string) (*batchv1.CronJob, error) {
-	cleanerCronJob := &batchv1.CronJob{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      fmt.Sprintf("cleaner-%s", req.Spec.DatabaseName),
-			Namespace: ns,
-			OwnerReferences: []metav1.OwnerReference{
-				{
-					APIVersion:         req.APIVersion,
-					Kind:               req.Kind,
-					Name:               req.Name,
-					UID:                req.UID,
-					BlockOwnerDeletion: func() *bool { b := true; return &b }(),
-				},
-			},
-		},
-		Spec: batchv1.CronJobSpec{
-			Schedule: req.Spec.Schedule,
-			JobTemplate: batchv1.JobTemplateSpec{
-				Spec: batchv1.JobSpec{
-					Template: corev1.PodTemplateSpec{
-						Spec: corev1.PodSpec{
-							Containers: []corev1.Container{
-								{
-									Name:            "cleaner-job",
-									Image:           "ashadrinnn/cleaner:0.0.1-0",
-									ImagePullPolicy: corev1.PullAlways,
-									Env: []corev1.EnvVar{
-										{
-											Name:  "S3_ENDPOINT",
-											Value: req.Spec.S3Endpoint,
-										},
-										{
-											Name:  "S3_ACCESS_KEY",
-											Value: req.Spec.S3AccessKey,
-										},
-										{
-											Name:  "S3_SECRET_KEY",
-											Value: req.Spec.S3SecretKey,
-										},
-										{
-											Name:  "S3_BUCKET_NAME",
-											Value: req.Spec.S3BucketName,
-										},
-										{
-											Name:  "S3_BACKUP_DIR",
-											Value: req.Spec.DatabaseName,
-										},
-										{
-											Name:  "MAX_BACKUP_COUNT",
-											Value: fmt.Sprint(req.Spec.MaxBackupCount),
-										},
-									},
-								},
-							},
-							RestartPolicy: corev1.RestartPolicyOnFailure,
-						},
-					},
-				},
-			},
-		},
-	}
-
-	err := r.Create(ctx, cleanerCronJob)
-	if apierrors.IsAlreadyExists(err) {
-		return cleanerCronJob, nil
-	} else if err != nil {
-		return nil, err
-	}
-
-	return cleanerCronJob, nil
 }
 
 func (r *BackupRequestReconciler) loadDatabaseConfig(ctx context.Context, namespace string) error {

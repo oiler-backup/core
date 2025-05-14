@@ -46,7 +46,7 @@ func main() {
 	}
 	backupName = fmt.Sprintf("%s:%s/%s", cfg.DbHost, cfg.DbPort, cfg.DbName)
 	backuper := backuper.NewBackuper(cfg.DbHost, cfg.DbPort, cfg.DbUser, cfg.DbPassword, cfg.DbName, BACKUP_PATH)
-	uploader := uploader.NewUploader(cfg.S3Endpoint, cfg.S3AccessKey, cfg.S3SecretKey, cfg.S3BucketName, cfg.DbName, S3REGION, cfg.Secure)
+	uploader := uploader.NewUploadCleaner(cfg.S3Endpoint, cfg.S3AccessKey, cfg.S3SecretKey, cfg.S3BucketName, cfg.DbName, S3REGION, cfg.MaxBackupCount, cfg.Secure)
 
 	// Backward metrics reporter
 	metricsReporter = metricsbase.NewMetricsReporter(cfg.CoreAddr, false)
