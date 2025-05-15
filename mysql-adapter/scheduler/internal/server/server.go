@@ -41,7 +41,7 @@ func NewBackupServer(systemNamespace, backuperImg, restorerImg string) (*BackupS
 
 	jobsCreator := serversbase.NewJobsCreator(clientset)
 	jobsStub := serversbase.NewJobsStub(
-		"postgres",
+		"mysql",
 		systemNamespace,
 		backuperImg,
 		restorerImg,
