@@ -86,6 +86,16 @@ spec:
           status:
             description: BackupRequestStatus defines the observed state of BackupRequest.
             properties:
+              cronJobData:
+                properties:
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+                required:
+                - name
+                - namespace
+                type: object
               lastBackupTime:
                 format: date-time
                 type: string

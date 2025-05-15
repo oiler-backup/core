@@ -35,6 +35,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 )
 
 var (
@@ -65,8 +66,6 @@ func (r *BackupRequestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	err := r.Get(ctx, req.NamespacedName, &backupRequest)
 	if apierrors.IsNotFound(err) {
 		return ctrl.Result{}, nil
-	} else if backupRequest.Status.Status != "" {
-		return ctrl.Result{}, nil
 	} else if err != nil {
 		log.Error(err, "Unable to get BackupRequest object")
 		return ctrl.Result{}, client.IgnoreNotFound(err)
@@ -78,18 +77,28 @@ func (r *BackupRequestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
-	backupRequest.Status.Status = IN_PROGRESS
-	if err := r.Status().Update(ctx, &backupRequest); err != nil {
-		log.Error(err, "Unable to update BackupRequest status")
-		r.mustSetFailed(ctx, req.NamespacedName)
-		return ctrl.Result{}, err
-	}
-
 	controllerAddress, exists := dbControllers[backupRequest.Spec.DatabaseType]
 	if !exists {
 		err := ErrNotSupported(backupRequest.Spec.DatabaseType)
 		log.Error(err, "Make sure to update database-config cm")
-		r.mustSetFailed(ctx, req.NamespacedName)
+		innerErr := r.setFailed(ctx, req.NamespacedName)
+		if innerErr != nil {
+			return ctrl.Result{}, innerErr
+		}
+		return ctrl.Result{}, err
+	}
+
+	if backupRequest.Status.Status == SUCCESS {
+		r.updateCronJob(ctx, controllerAddress, &backupRequest)
+	}
+
+	backupRequest.Status.Status = IN_PROGRESS
+	if err := r.Status().Update(ctx, &backupRequest); err != nil {
+		log.Error(err, "Unable to update BackupRequest status")
+		innerErr := r.setFailed(ctx, req.NamespacedName)
+		if innerErr != nil {
+			return ctrl.Result{}, innerErr
+		}
 		return ctrl.Result{}, err
 	}
 
@@ -99,7 +108,10 @@ func (r *BackupRequestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		cjExists = true
 	} else if err != nil {
 		log.Error(err, "Cannot delegate to controller")
-		r.mustSetFailed(ctx, req.NamespacedName)
+		innerErr := r.setFailed(ctx, req.NamespacedName)
+		if innerErr != nil {
+			return ctrl.Result{}, innerErr
+		}
 		return ctrl.Result{}, err
 	}
 
@@ -114,15 +126,25 @@ func (r *BackupRequestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 		if err := r.Update(ctx, cronJob); err != nil {
 			log.Error(err, "Failed to update cronJob")
-			r.mustSetFailed(ctx, req.NamespacedName)
+			innerErr := r.setFailed(ctx, req.NamespacedName)
+			if innerErr != nil {
+				return ctrl.Result{}, innerErr
+			}
 			return ctrl.Result{}, err
 		}
 	}
 
 	backupRequest.Status.Status = SUCCESS
+	backupRequest.Status.CronJobData = backupv1.CreatedCronJobData{
+		Name:      cronJob.Name,
+		Namespace: cronJob.Namespace,
+	}
 	if err := r.Status().Update(ctx, &backupRequest); err != nil {
 		log.Error(err, "Unable to update BackupRequest status")
-		r.mustSetFailed(ctx, req.NamespacedName)
+		innerErr := r.setFailed(ctx, req.NamespacedName)
+		if innerErr != nil {
+			return ctrl.Result{}, innerErr
+		}
 		return ctrl.Result{}, err
 	}
 
@@ -130,25 +152,26 @@ func (r *BackupRequestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	return ctrl.Result{}, nil
 }
 
-func (r *BackupRequestReconciler) mustSetFailed(ctx context.Context, nsName types.NamespacedName) {
+func (r *BackupRequestReconciler) setFailed(ctx context.Context, nsName types.NamespacedName) error {
 	log := log.FromContext(ctx).WithValues("set-failed", nsName)
 	var backupRequest backupv1.BackupRequest
 	if err := r.Get(ctx, nsName, &backupRequest); err != nil {
-		panic(err)
+		return err
 	}
 
-	if backupRequest.Status.Status == FAILURE || backupRequest.Status.Status == SUCCESS {
-		return
+	if backupRequest.Status.Status == SUCCESS {
+		return nil
 	}
 
 	backupRequest.Status.Status = FAILURE
 	log.Info("Setting BackupRequest failed")
 	if err := r.Status().Update(ctx, &backupRequest); err != nil {
-		log.Error(err, "Failed to set failed status on br %s", backupRequest.Name)
-		panic(err)
+		log.Error(err, "Failed to set failed status on br")
+		return err
 	}
 
 	log.Info("Successfully updated BackupRequest status to failed state")
+	return nil
 }
 
 func (r *BackupRequestReconciler) delegateToController(ctx context.Context, controllerAddress string, backupRequest *backupv1.BackupRequest) (*batchv1.CronJob, error) {
@@ -206,6 +229,52 @@ func (r *BackupRequestReconciler) delegateToController(ctx context.Context, cont
 	return &cronJob, nil
 }
 
+func (r *BackupRequestReconciler) updateCronJob(ctx context.Context, controllerAddress string, backupRequest *backupv1.BackupRequest) error {
+	conn, err := grpc.NewClient(
+		controllerAddress,
+		grpc.WithTransportCredentials(
+			insecure.NewCredentials(),
+		),
+	)
+
+	if err != nil {
+		return fmt.Errorf("failed to connect to %s: %w", controllerAddress, err)
+	}
+	defer conn.Close()
+
+	client := pb.NewBackupServiceClient(conn)
+
+	br := &pb.BackupRequest{
+		DbUri:          backupRequest.Spec.DatabaseURI,
+		DbPort:         int64(backupRequest.Spec.DatabasePort),
+		DbUser:         backupRequest.Spec.DatabaseUser,
+		DbPass:         backupRequest.Spec.DatabasePass,
+		DbName:         backupRequest.Spec.DatabaseName,
+		DatabaseType:   backupRequest.Spec.DatabaseType,
+		Schedule:       backupRequest.Spec.Schedule,
+		StorageClass:   backupRequest.Spec.StorageClass,
+		S3Endpoint:     backupRequest.Spec.S3Endpoint,
+		S3AccessKey:    backupRequest.Spec.S3AccessKey,
+		S3SecretKey:    backupRequest.Spec.S3SecretKey,
+		S3BucketName:   backupRequest.Spec.S3BucketName,
+		CoreAddr:       os.Getenv("CORE_ADDR"),
+		MaxBackupCount: backupRequest.Spec.MaxBackupCount,
+	}
+
+	req := pb.UpdateBackupRequest{
+		Request:          br,
+		CronjobName:      backupRequest.Status.CronJobData.Name,
+		CronjobNamespace: backupRequest.Status.CronJobData.Namespace,
+	}
+
+	_, err = client.Update(ctx, &req)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // SetupWithManager sets up the controller with the Manager.
 func (r *BackupRequestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	var err error
@@ -217,5 +286,6 @@ func (r *BackupRequestReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&backupv1.BackupRequest{}).
 		Named("backuprequest").
+		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		Complete(r)
 }

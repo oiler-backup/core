@@ -38,10 +38,16 @@ type BackupRequestSpec struct {
 	MaxBackupCount int64  `json:"maxBackupCount"`
 }
 
+type CreatedCronJobData struct {
+	Name      string `json:"name,required"`
+	Namespace string `json:"namespace,required"`
+}
+
 // BackupRequestStatus defines the observed state of BackupRequest.
 type BackupRequestStatus struct {
-	Status         string       `json:"status,omitempty"`
-	LastBackupTime *metav1.Time `json:"lastBackupTime,omitempty"`
+	Status         string             `json:"status,omitempty"`
+	LastBackupTime *metav1.Time       `json:"lastBackupTime,omitempty"`
+	CronJobData    CreatedCronJobData `json:"cronJobData,omitempty"`
 }
 
 // +kubebuilder:object:root=true

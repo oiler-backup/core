@@ -134,7 +134,7 @@ func (r *BackupRestoreReconciler) mustSetFailed(ctx context.Context, nsName type
 	backupRestore.Status.Status = FAILURE
 	log.Info("Setting BackupRestore failed")
 	if err := r.Status().Update(ctx, &backupRestore); err != nil {
-		log.Error(err, "Failed to set failed status on br %s", backupRestore.Name)
+		log.Error(err, "Failed to set failed status on br")
 		panic(err)
 	}
 

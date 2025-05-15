@@ -3,7 +3,7 @@ module github.com/AntonShadrinNN/oiler-backup
 go 1.24.2
 
 require (
-	github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250514170202-9ac657ef451d
+	github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250515223830-4b18d0bc1942
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/onsi/ginkgo/v2 v2.21.0
 	github.com/onsi/gomega v1.35.1
