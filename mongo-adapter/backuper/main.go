@@ -2,170 +2,76 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
-	"io/fs"
-	"log"
-	"net/http"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"backuper/internal/backuper"
+	"backuper/internal/config"
+	"backuper/pkg/metrics"
+	"backuper/pkg/uploader"
+
+	loggerbase "github.com/AntonShadrinNN/oiler-backup-base/logger"
+	metricsbase "github.com/AntonShadrinNN/oiler-backup-base/metrics"
+	"go.uber.org/zap"
+)
+
+const (
+	S3REGION    = "us-east-1" // Fictious
+	BACKUP_PATH = "/tmp/backup.tar"
+)
+
+var (
+	logger          *zap.SugaredLogger
+	metricsReporter metricsbase.MetricsReporter
+	ctx             context.Context
+	backupName      string
 )
 
 func main() {
-	ctx := context.Background()
-	dbHost := os.Getenv("DB_HOST")
-	dbPort := os.Getenv("DB_PORT")
-	dbUser := os.Getenv("DB_USER")
-	dbPassword := os.Getenv("DB_PASSWORD")
-	dbName := os.Getenv("DB_NAME")
-	coreAddr := os.Getenv("CORE_ADDR")
-	backupPath := "/tmp/backup"
+	ctx = context.Background()
 
-	s3Endpoint := os.Getenv("S3_ENDPOINT")
-	s3AccessKey := os.Getenv("S3_ACCESS_KEY")
-	s3SecretKey := os.Getenv("S3_SECRET_KEY")
-	s3BucketName := os.Getenv("S3_BUCKET_NAME")
-
-	backupName := fmt.Sprintf("%s:%s/%s", dbHost, dbPort, dbName)
-	if dbHost == "" || dbPort == "" || dbUser == "" || dbPassword == "" || dbName == "" ||
-		s3Endpoint == "" || s3AccessKey == "" || s3SecretKey == "" || s3BucketName == "" || coreAddr == "" {
-		log.Fatal("Envs DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY, S3_BUCKET_NAME, CORE_ADDR are required")
-		reportStatus(ctx, coreAddr, backupName, false, -1)
-	}
-
-	dumpCmd := exec.CommandContext(ctx, "mongodump",
-		"--host", dbHost,
-		"--port", dbPort,
-		"--username", dbUser,
-		"--password", dbPassword,
-		"--db", dbName,
-		"--out", backupPath,
-		"--authenticationDatabase", "admin",
-	)
-
-	output, err := dumpCmd.CombinedOutput()
+	// Zap logger configuration
+	var err error
+	logger, err = loggerbase.GetLogger(loggerbase.PRODUCTION)
 	if err != nil {
-		log.Fatalf("Failed executing mongodump: %v\n%s", err, string(output))
-		reportStatus(ctx, coreAddr, backupName, false, -1)
+		panic(fmt.Sprintf("Failed to initiate logger: %w", err))
 	}
-	log.Printf("Backup created successfully: %s\n", backupPath)
 
-	dateNow := time.Now().Format("2006-01-02-15-04-05")
-	err = uploadToS3(ctx, s3Endpoint, s3AccessKey, s3SecretKey, s3BucketName, backupPath, fmt.Sprintf("%s-%s-backup", dbName, dateNow))
+	// Configuration of a backuper
+	cfg, err := config.GetConfig()
 	if err != nil {
-		log.Fatalf("Failed to upload backup to MinIO: %v", err)
-		reportStatus(ctx, coreAddr, backupName, false, -1)
+		panic(fmt.Sprintf("Failed to configurate: %w", err))
+	}
+	backupName = fmt.Sprintf("%s:%s/%s", cfg.DbHost, cfg.DbPort, cfg.DbName)
+	backuper := backuper.NewBackuper(cfg.DbHost, cfg.DbPort, cfg.DbUser, cfg.DbPassword, cfg.DbName, BACKUP_PATH)
+	uploader := uploader.NewUploadCleaner(cfg.S3Endpoint, cfg.S3AccessKey, cfg.S3SecretKey, cfg.S3BucketName, cfg.DbName, S3REGION, cfg.MaxBackupCount, cfg.Secure)
+
+	// Backward metrics reporter
+	metricsReporter = metricsbase.NewMetricsReporter(cfg.CoreAddr, false)
+
+	err = backuper.Backup(ctx)
+	if err != nil {
+		mustProccessErrors("Failed to perform backup", err, metrics.NewMetricsData(backupName, false))
 	}
 
-	reportStatus(ctx, coreAddr, backupName, true, time.Now().Unix())
-	log.Println("Backup successfully loaded to MinIO")
+	err = uploader.Upload(ctx, BACKUP_PATH)
+	if err != nil {
+		mustProccessErrors("Failed to perform upload", err, metrics.NewMetricsData(backupName, false))
+	}
+
+	err = metricsReporter.ReportStatus(ctx, backupName, true, time.Now().Unix())
+	if err != nil {
+		logger.Fatalf("Failed to report successful status %w\n", err)
+	}
+	logger.Infof("Backup successfully loaded to S3")
 }
 
-func uploadToS3(ctx context.Context, endpoint, accessKey, secretKey, bucketName, dirPath, objectKey string) error {
-	cfg, err := config.LoadDefaultConfig(ctx,
-		config.WithRegion("us-east-1"),
-		config.WithCredentialsProvider(aws.CredentialsProviderFunc(func(ctx context.Context) (aws.Credentials, error) {
-			return aws.Credentials{
-				AccessKeyID:     accessKey,
-				SecretAccessKey: secretKey,
-			}, nil
-		})),
-	)
+func mustProccessErrors(msg string, err error, metricsData metrics.MetricsData, keysAndValues ...interface{}) {
+	logger.Errorw(msg, "error", err, keysAndValues)
+	err = metricsReporter.ReportStatus(ctx, backupName, false, -1)
 	if err != nil {
-		log.Fatalf("Failure during AWS SDK configuration: %v", err)
+		logger.Fatalf("Failed to report metric %w\n", err)
 	}
-
-	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.UsePathStyle = true
-		o.BaseEndpoint = aws.String(endpoint)
-		o.HTTPClient = &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: true,
-				},
-			},
-		}
-	})
-
-	err = filepath.Walk(dirPath, func(filePath string, info fs.FileInfo, err error) error {
-		if err != nil {
-			return fmt.Errorf("error accessing path %q: %w", filePath, err)
-		}
-
-		if info.IsDir() {
-			return nil
-		}
-
-		file, err := os.Open(filePath)
-		if err != nil {
-			return fmt.Errorf("failed to open file %q: %w", filePath, err)
-		}
-		defer file.Close()
-
-		relativePath, err := filepath.Rel(dirPath, filePath)
-		if err != nil {
-			return fmt.Errorf("failed to calculate relative path for %q: %w", filePath, err)
-		}
-
-		s3Key := filepath.Join(objectKey, relativePath)
-
-		_, err = client.PutObject(ctx, &s3.PutObjectInput{
-			Bucket: aws.String(bucketName),
-			Key:    aws.String(s3Key),
-			Body:   file,
-		})
-		if err != nil {
-			return fmt.Errorf("failed to upload file %q to S3 with key %q: %w", filePath, s3Key, err)
-		}
-
-		fmt.Printf("Uploaded %q to S3 with key %q\n", filePath, s3Key)
-		return nil
-	})
-
-	if err != nil {
-		return fmt.Errorf("error during directory walk: %w", err)
-	}
-
-	return nil
-}
-
-func reportStatus(ctx context.Context, coreAddr string, name string, success bool, timeStamp int64) error {
-	log.Println("Reporting status")
-	conn, err := grpc.NewClient(
-		coreAddr,
-		grpc.WithTransportCredentials(
-			insecure.NewCredentials(),
-		),
-	)
-
-	if err != nil {
-		log.Println("Failed to connect to core: %w", err)
-		return fmt.Errorf("failed to connect to %s: %w", coreAddr, err)
-	}
-	defer conn.Close()
-
-	client := NewBackupMetricsServiceClient(conn)
-
-	req := BackupMetrics{
-		BackupName: name,
-		Success:    success,
-		Timestamp:  timeStamp,
-	}
-
-	_, err = client.ReportSuccessfulBackup(ctx, &req)
-	if err != nil {
-		log.Println("Failed to report status: %w", err)
-		return err
-	}
-
-	log.Println("Status Reported Successfully")
-	return nil
+	os.Exit(1)
 }
