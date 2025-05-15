@@ -10,10 +10,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
-	"postgres_adapter/pkg/envgetters"
-
 	pb "github.com/AntonShadrinNN/oiler-backup-base/proto"
 	serversbase "github.com/AntonShadrinNN/oiler-backup-base/servers/backup"
+	eg "github.com/AntonShadrinNN/oiler-backup-base/servers/backup/envgetters"
 )
 
 type ErrBackupServer = error
@@ -70,8 +69,8 @@ func RegisterBackupServer(grpcServer *grpc.Server, systemNamespace, backuperImag
 func (s *BackupServer) Backup(ctx context.Context, req *pb.BackupRequest) (*pb.BackupResponse, error) {
 	cj := s.jobsStub.BuildBackuperCj(
 		req.Schedule,
-		serversbase.NewEnvGetterMerger([]serversbase.EnvGetter{
-			envgetters.CommonEnvGetter{
+		eg.NewEnvGetterMerger([]eg.EnvGetter{
+			eg.CommonEnvGetter{
 				DbUri:        req.DbUri,
 				DbPort:       fmt.Sprint(req.DbPort),
 				DbUser:       req.DbUser,
@@ -83,7 +82,7 @@ func (s *BackupServer) Backup(ctx context.Context, req *pb.BackupRequest) (*pb.B
 				S3BucketName: req.S3BucketName,
 				CoreAddr:     req.CoreAddr,
 			},
-			envgetters.BackuperEnvGetter{
+			eg.BackuperEnvGetter{
 				MaxBackupCount: int(req.MaxBackupCount),
 			},
 		}),
@@ -110,8 +109,8 @@ func (s *BackupServer) Backup(ctx context.Context, req *pb.BackupRequest) (*pb.B
 
 func (s *BackupServer) Restore(ctx context.Context, req *pb.BackupRestore) (*pb.BackupRestoreResponse, error) {
 	job := s.jobsStub.BuildRestorerJob(
-		serversbase.NewEnvGetterMerger([]serversbase.EnvGetter{
-			envgetters.CommonEnvGetter{
+		eg.NewEnvGetterMerger([]eg.EnvGetter{
+			eg.CommonEnvGetter{
 				DbUri:        req.DbUri,
 				DbPort:       fmt.Sprint(req.DbPort),
 				DbUser:       req.DbUser,
@@ -123,7 +122,7 @@ func (s *BackupServer) Restore(ctx context.Context, req *pb.BackupRestore) (*pb.
 				S3BucketName: req.S3BucketName,
 				// CoreAddr:     req.CoreAddr, // TODO
 			},
-			envgetters.RestorerEnvGetter{
+			eg.RestorerEnvGetter{
 				BackupRevision: req.BackupRevision,
 			},
 		},
