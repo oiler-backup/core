@@ -20,15 +20,14 @@ type ErrBackupServer = error
 type BackupServer struct {
 	pb.UnimplementedBackupServiceServer
 	kubeClient    *kubernetes.Clientset
-	jobsCreator   serversbase.JobsCreator
+	jobsCreator   serversbase.IJobsCreator
 	namespace     string
 	backuperImage string
 	restorerImage string
-	coreAddr      string
-	jobsStub      serversbase.JobsStub
+	jobsStub      serversbase.IJobStub
 }
 
-func NewBackupServer(systemNamespace, backuperImg, restorerImg string) (*BackupServer, error) {
+func NewBackupServer(systemNamespace, backuperImg, restorerImg string) (*BackupServer, error) { // coverage-ignore
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load Kubernetes config: %w", err)
@@ -56,7 +55,7 @@ func NewBackupServer(systemNamespace, backuperImg, restorerImg string) (*BackupS
 	}, nil
 }
 
-func RegisterBackupServer(grpcServer *grpc.Server, systemNamespace, backuperImage, restorerImage string) error {
+func RegisterBackupServer(grpcServer *grpc.Server, systemNamespace, backuperImage, restorerImage string) error { // coverage-ignore
 	server, err := NewBackupServer(systemNamespace, backuperImage, restorerImage)
 	if err != nil {
 		return err
