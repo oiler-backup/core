@@ -2,6 +2,8 @@ github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250514170202-9ac657ef451d h
 github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250514170202-9ac657ef451d/go.mod h1:J/W7Gy5yx8Zpg7OrJvzi+ODdYzMrlN2W9YJtMbEtjYA=
 github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250515223830-4b18d0bc1942 h1:g+wRvucLbSj1R3Fr7ioCuiFIIzpFeLylkcPYa2QhamQ=
 github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250515223830-4b18d0bc1942/go.mod h1:J/W7Gy5yx8Zpg7OrJvzi+ODdYzMrlN2W9YJtMbEtjYA=
+github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250517154815-c71dc876f7ee h1:NC4InHREuk8BVBVFv2eUbwdKKzToHXgvwhuL/gkRGQo=
+github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250517154815-c71dc876f7ee/go.mod h1:fa+kFmyGRzlbYf5t7vCD86Lzb+JIHpwz91SB4IyRyt0=
 github.com/antlr4-go/antlr/v4 v4.13.0 h1:lxCg3LAv+EUK6t1i0y1V6/SLeUi0eKEKdhQAlS8TVTI=
 github.com/antlr4-go/antlr/v4 v4.13.0/go.mod h1:pfChB/xh/Unjila75QW7+VU4TSnWnnk9UTnmpPaOR2g=
 github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a h1:idn718Q4B6AGu/h5Sxe66HYVdqdGu2l9Iebqhi/AEoA=

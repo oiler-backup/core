@@ -11,7 +11,7 @@ import (
 type ErrBackup = error
 
 func buildBackupError(msg string, opts ...any) ErrBackup {
-	return fmt.Errorf(msg, opts)
+	return fmt.Errorf(msg, opts...)
 }
 
 type Backuper struct {

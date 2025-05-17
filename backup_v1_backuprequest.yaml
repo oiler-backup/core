@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: backuprequest-sample
 spec:
-  dbUri: "10.106.89.115"
+  dbUri: "10.97.152.109"
   databasePort: 5432
   databaseUser: "admin"
   databasePass: "password"
@@ -14,8 +14,8 @@ spec:
   databaseType: "postgres"
   schedule: "*/1 * * * *"
   storageClass: "s3"
-  s3Endpoint: "https://10.109.113.71:443"
-  s3AccessKey: 1W4OP4oW794fr5qtxkfJ
-  s3SecretKey: HKjkGyxvJSRcO3taCZZkUrHviFDPGTviAIcj3GLI
+  s3Endpoint: "https://10.99.152.233:443"
+  s3AccessKey: 14PcLhk3HKXJ3Jdq88Vg
+  s3SecretKey: eOAAaPLoJ0RevDmmcj6gS4fjPbTz1iqrBt7dm2Id
   maxBackupCount: 2
   s3BucketName: test

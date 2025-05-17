@@ -89,7 +89,11 @@ func (r *BackupRequestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	if backupRequest.Status.Status == SUCCESS {
-		r.updateCronJob(ctx, controllerAddress, &backupRequest)
+		err := r.updateCronJob(ctx, controllerAddress, &backupRequest)
+		if err != nil {
+			return ctrl.Result{}, err
+		}
+		return ctrl.Result{}, nil
 	}
 
 	backupRequest.Status.Status = IN_PROGRESS
