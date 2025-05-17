@@ -107,6 +107,42 @@ func (s *BackupServer) Backup(ctx context.Context, req *pb.BackupRequest) (*pb.B
 	}, nil
 }
 
+func (s *BackupServer) Update(ctx context.Context, req *pb.UpdateBackupRequest) (*pb.BackupResponse, error) {
+	err := s.jobsCreator.UpdateCronJob(
+		ctx,
+		req.CronjobName,
+		req.CronjobNamespace,
+		eg.NewEnvGetterMerger([]eg.EnvGetter{
+			eg.CommonEnvGetter{
+				DbUri:        req.Request.DbUri,
+				DbPort:       fmt.Sprint(req.Request.DbPort),
+				DbUser:       req.Request.DbUser,
+				DbPass:       req.Request.DbPass,
+				DbName:       req.Request.DbName,
+				S3Endpoint:   req.Request.S3Endpoint,
+				S3AccessKey:  req.Request.S3AccessKey,
+				S3SecretKey:  req.Request.S3SecretKey,
+				S3BucketName: req.Request.S3BucketName,
+				CoreAddr:     req.Request.CoreAddr,
+			},
+			eg.BackuperEnvGetter{
+				MaxBackupCount: int(req.Request.MaxBackupCount),
+			},
+		}).GetEnvs(),
+	)
+	if err != nil {
+		return &pb.BackupResponse{
+			Status: "Failed to update cronjob",
+		}, err
+	}
+
+	return &pb.BackupResponse{
+		Status:           "CronJob updated successfully",
+		CronjobName:      req.CronjobName,
+		CronjobNamespace: req.CronjobNamespace,
+	}, nil
+}
+
 func (s *BackupServer) Restore(ctx context.Context, req *pb.BackupRestore) (*pb.BackupRestoreResponse, error) {
 	job := s.jobsStub.BuildRestorerJob(
 		eg.NewEnvGetterMerger([]eg.EnvGetter{
