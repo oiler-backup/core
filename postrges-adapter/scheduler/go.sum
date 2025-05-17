@@ -1,5 +1,5 @@
-github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250515161620-a280e085eab2 h1:Tcbux641EFzc6hUehoV792pkt1SvF8wtSHaTnvANnVY=
-github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250515161620-a280e085eab2/go.mod h1:J/W7Gy5yx8Zpg7OrJvzi+ODdYzMrlN2W9YJtMbEtjYA=
+github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250517192010-84f123f8eff7 h1:JXHxptUtdDKwmfU8JGAoUo5NWHi/6+/B6sormwmIfQ4=
+github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250517192010-84f123f8eff7/go.mod h1:fa+kFmyGRzlbYf5t7vCD86Lzb+JIHpwz91SB4IyRyt0=
 github.com/caarlos0/env/v11 v11.3.1 h1:cArPWC15hWmEt+gWk7YBi7lEXTXCvpaSdCiZE2X5mCA=
 github.com/caarlos0/env/v11 v11.3.1/go.mod h1:qupehSf/Y0TUTsxKywqRt/vJjN5nz6vauiYEUUr8P4U=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
