@@ -11,7 +11,7 @@ import (
 	"mongo_adapter/internal/config"
 	"mongo_adapter/internal/server"
 
-	loggerbase "github.com/AntonShadrinNN/oiler-backup-base/logger"
+	loggerbase "github.com/oiler-backup/base/logger"
 )
 
 func main() {

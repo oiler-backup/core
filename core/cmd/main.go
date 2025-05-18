@@ -24,7 +24,7 @@ import (
 	"net"
 	"os"
 
-	pb "github.com/AntonShadrinNN/oiler-backup-base/proto"
+	pb "github.com/oiler-backup/base/proto"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -42,8 +42,8 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	backupv1 "github.com/AntonShadrinNN/oiler-backup/api/v1"
-	"github.com/AntonShadrinNN/oiler-backup/internal/controller"
+	backupv1 "github.com/oiler-backup/core/api/v1"
+	"github.com/oiler-backup/core/internal/controller"
 	"github.com/prometheus/client_golang/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 	// +kubebuilder:scaffold:imports

@@ -32,7 +32,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	backupv1 "github.com/AntonShadrinNN/oiler-backup/api/v1"
+	backupv1 "github.com/oiler-backup/core/api/v1"
 	// +kubebuilder:scaffold:imports
 )
 

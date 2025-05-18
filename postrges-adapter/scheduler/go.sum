@@ -1,5 +1,3 @@
-github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250517192010-84f123f8eff7 h1:JXHxptUtdDKwmfU8JGAoUo5NWHi/6+/B6sormwmIfQ4=
-github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250517192010-84f123f8eff7/go.mod h1:fa+kFmyGRzlbYf5t7vCD86Lzb+JIHpwz91SB4IyRyt0=
 github.com/caarlos0/env/v11 v11.3.1 h1:cArPWC15hWmEt+gWk7YBi7lEXTXCvpaSdCiZE2X5mCA=
 github.com/caarlos0/env/v11 v11.3.1/go.mod h1:qupehSf/Y0TUTsxKywqRt/vJjN5nz6vauiYEUUr8P4U=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
@@ -61,6 +59,8 @@ github.com/modern-go/reflect2 v1.0.2 h1:xBagoLtFs94CBntxluKeaWgTMpvLxC4ur3nMaC9G
 github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjYzDa0/r8luk=
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq1c1nUAm88MOHcQC9l5mIlSMApZMrHA=
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
+github.com/oiler-backup/base v0.0.0-20250518145859-bf573dc47373 h1:SW37Ww//BSYFp9vDd+XTOWpXXWKrpGNXv57t225dvb4=
+github.com/oiler-backup/base v0.0.0-20250518145859-bf573dc47373/go.mod h1:cnX/aTCKneXdbk8dnN+2FuXKKmuy+UqJ+VbYozp6AEE=
 github.com/onsi/ginkgo/v2 v2.21.0 h1:7rg/4f3rB88pb5obDgNZrNHrQ4e6WpjonchcpuBRnZM=
 github.com/onsi/ginkgo/v2 v2.21.0/go.mod h1:7Du3c42kxCUegi0IImZ1wUQzMBVecgIHjR1C+NkhLQo=
 github.com/onsi/gomega v1.35.1 h1:Cwbd75ZBPxFSuZ6T+rN/WCb/gOc6YgFBXLlZLhC7Ds4=

@@ -10,9 +10,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 
-	pb "github.com/AntonShadrinNN/oiler-backup-base/proto"
-	serversbase "github.com/AntonShadrinNN/oiler-backup-base/servers/backup"
-	eg "github.com/AntonShadrinNN/oiler-backup-base/servers/backup/envgetters"
+	pb "github.com/oiler-backup/base/proto"
+	serversbase "github.com/oiler-backup/base/servers/backup"
+	eg "github.com/oiler-backup/base/servers/backup/envgetters"
 )
 
 // An ErrBackupServer is required for more verbosity.

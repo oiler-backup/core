@@ -3,8 +3,8 @@ module mongo_adapter
 go 1.24.2
 
 require (
-	github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250517223348-10c4123db2bf
 	github.com/caarlos0/env/v11 v11.3.1
+	github.com/oiler-backup/base v0.0.0-20250518145859-bf573dc47373
 	github.com/stretchr/testify v1.10.0
 	google.golang.org/grpc v1.72.0
 	k8s.io/api v0.33.0
