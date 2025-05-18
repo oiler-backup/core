@@ -3,9 +3,11 @@ module mongo_adapter
 go 1.24.2
 
 require (
-	github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250515172350-abb3c5bfeadd
+	github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250517223348-10c4123db2bf
 	github.com/caarlos0/env/v11 v11.3.1
+	github.com/stretchr/testify v1.10.0
 	google.golang.org/grpc v1.72.0
+	k8s.io/api v0.33.0
 	k8s.io/client-go v0.33.0
 )
 
@@ -29,6 +31,8 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
@@ -43,7 +47,6 @@ require (
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.33.0 // indirect
 	k8s.io/apimachinery v0.33.0 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff // indirect
