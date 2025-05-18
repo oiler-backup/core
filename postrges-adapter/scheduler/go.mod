@@ -3,7 +3,7 @@ module postgres_adapter
 go 1.24.2
 
 require (
-	github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250517192010-84f123f8eff7
+	github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250517223348-10c4123db2bf
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/stretchr/testify v1.10.0
 	google.golang.org/grpc v1.72.0
