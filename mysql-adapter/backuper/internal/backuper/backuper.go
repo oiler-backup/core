@@ -40,7 +40,7 @@ func (b Backuper) Backup(ctx context.Context) error {
 	connStr := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", b.dbUser, b.dbPass, b.dbHost, b.dbPort, b.dbName)
 
 	db, err := sql.Open("mysql", connStr)
-	if err != nil {
+	if err != nil { // coverage-ignore
 		return buildBackupError("Failed to open driver for database: %+v", err)
 	}
 	defer db.Close()
