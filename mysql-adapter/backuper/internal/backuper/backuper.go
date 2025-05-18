@@ -5,12 +5,14 @@ import (
 	"database/sql"
 	"fmt"
 	"os/exec"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type ErrBackup = error
 
 func buildBackupError(msg string, opts ...any) ErrBackup {
-	return fmt.Errorf(msg, opts)
+	return fmt.Errorf(msg, opts...)
 }
 
 type Backuper struct {
@@ -44,7 +46,7 @@ func (b Backuper) Backup(ctx context.Context) error {
 	defer db.Close()
 
 	err = db.PingContext(ctx)
-	if err != nil {
+	if err != nil { // coverage-ignore
 		return buildBackupError("Failed to connect to database: %+v", err)
 	}
 
@@ -59,8 +61,8 @@ func (b Backuper) Backup(ctx context.Context) error {
 	)
 
 	output, err := dumpCmd.CombinedOutput()
-	if err != nil {
-		return buildBackupError("Failed executing pg_dump: %+v\n.Output:%s", err, string(output))
+	if err != nil { // coverage-ignore
+		return buildBackupError("Failed executing mysqldump: %+v\n.Output:%s", err, string(output))
 	}
 	return nil
 }
