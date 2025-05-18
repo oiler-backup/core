@@ -12,7 +12,7 @@ import (
 type ErrUpload = error
 
 func buildUploadCleanerError(msg string, opts ...any) ErrUpload {
-	return fmt.Errorf(msg, opts)
+	return fmt.Errorf(msg, opts...)
 }
 
 type UploadCleaner struct {
