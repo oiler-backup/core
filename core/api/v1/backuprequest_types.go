@@ -20,21 +20,31 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type DatabaseSpec struct {
+	URI    string `json:"uri"`
+	Port   int    `json:"port"`
+	User   string `json:"user"`
+	Pass   string `json:"pass"`
+	DbName string `json:"dbName"`
+	DbType string `json:"dbType"`
+}
+
+type S3Auth struct {
+	AccessKey string `json:"accessKey"`
+	SecretKey string `json:"secretKey"`
+}
+type S3Spec struct {
+	Endpoint   string `json:"endpoint"`
+	Auth       S3Auth `json:"auth"`
+	BucketName string `json:"bucketName"`
+}
+
 // BackupRequestSpec defines the desired state of BackupRequest.
 type BackupRequestSpec struct {
-	DatabaseURI  string `json:"dbUri"`
-	DatabasePort int    `json:"databasePort"`
-	DatabaseUser string `json:"databaseUser"`
-	DatabasePass string `json:"databasePass"`
-	DatabaseName string `json:"databaseName"`
-	DatabaseType string `json:"databaseType"`
+	DbSpec DatabaseSpec `json:"dbSpec"`
+	S3Spec S3Spec       `json:"s3Spec"`
 
 	Schedule       string `json:"schedule"`
-	S3Endpoint     string `json:"s3Endpoint"`
-	S3AccessKey    string `json:"s3AccessKey"`
-	S3SecretKey    string `json:"s3SecretKey"`
-	S3BucketName   string `json:"s3BucketName"`
-	StorageClass   string `json:"storageClass"`
 	MaxBackupCount int64  `json:"maxBackupCount"`
 }
 

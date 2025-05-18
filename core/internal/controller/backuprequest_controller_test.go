@@ -89,18 +89,23 @@ var _ = Describe("BackupRequest Controller", func() {
 					Namespace: "default",
 				},
 				Spec: backupv1.BackupRequestSpec{
-					DatabaseType:   "postgres",
-					DatabaseURI:    "localhost",
-					DatabasePort:   5432,
-					DatabaseUser:   "user",
-					DatabasePass:   "pass",
-					DatabaseName:   "db",
+					DbSpec: backupv1.DatabaseSpec{
+						URI:    "localhost",
+						Port:   5432,
+						User:   "user",
+						Pass:   "pass",
+						DbName: "db",
+						DbType: "postgres",
+					},
+					S3Spec: backupv1.S3Spec{
+						Endpoint: "s3.example.com",
+						Auth: backupv1.S3Auth{
+							AccessKey: "key",
+							SecretKey: "secret",
+						},
+						BucketName: "bucket",
+					},
 					Schedule:       "0 0 * * *",
-					StorageClass:   "standard",
-					S3Endpoint:     "s3.example.com",
-					S3AccessKey:    "key",
-					S3SecretKey:    "secret",
-					S3BucketName:   "bucket",
 					MaxBackupCount: 7,
 				},
 			}
@@ -122,7 +127,9 @@ var _ = Describe("BackupRequest Controller", func() {
 					Namespace: "default",
 				},
 				Spec: backupv1.BackupRequestSpec{
-					DatabaseType: "unknown",
+					DbSpec: backupv1.DatabaseSpec{
+						DbType: "unknown",
+					},
 				},
 			}
 			Expect(k8sClient.Create(ctx, br)).To(Succeed())
