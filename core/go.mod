@@ -1,10 +1,10 @@
-module github.com/AntonShadrinNN/oiler-backup
+module github.com/oiler-backup/core
 
 go 1.24.2
 
 require (
-	github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250517154815-c71dc876f7ee
 	github.com/caarlos0/env/v11 v11.3.1
+	github.com/oiler-backup/base v0.0.0-20250518145859-bf573dc47373
 	github.com/onsi/ginkgo/v2 v2.21.0
 	github.com/onsi/gomega v1.35.1
 	github.com/prometheus/client_golang v1.19.1

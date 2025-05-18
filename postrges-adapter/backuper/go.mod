@@ -5,6 +5,7 @@ go 1.24.2
 require (
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/lib/pq v1.10.9
+	github.com/oiler-backup/base v0.0.0-20250518145859-bf573dc47373
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.37.0
 	go.uber.org/zap v1.27.0
@@ -71,7 +72,6 @@ require (
 )
 
 require (
-	github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250517192010-84f123f8eff7
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.10 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.67 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.30 // indirect

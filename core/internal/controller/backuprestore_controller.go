@@ -21,7 +21,7 @@ import (
 	"errors"
 	"fmt"
 
-	pb "github.com/AntonShadrinNN/oiler-backup-base/proto"
+	pb "github.com/oiler-backup/base/proto"
 	grpc "google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	batchv1 "k8s.io/api/batch/v1"
@@ -33,7 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	backupv1 "github.com/AntonShadrinNN/oiler-backup/api/v1"
+	backupv1 "github.com/oiler-backup/core/api/v1"
 )
 
 // BackupRestoreReconciler reconciles a BackupRestore object

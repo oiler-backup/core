@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	s3base "github.com/AntonShadrinNN/oiler-backup-base/s3"
+	s3base "github.com/oiler-backup/base/s3"
 )
 
 type ErrUpload = error

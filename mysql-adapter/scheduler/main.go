@@ -11,7 +11,7 @@ import (
 	"mysql_adapter/internal/config"
 	"mysql_adapter/internal/server"
 
-	loggerbase "github.com/AntonShadrinNN/oiler-backup-base/logger"
+	loggerbase "github.com/oiler-backup/base/logger"
 )
 
 func main() {

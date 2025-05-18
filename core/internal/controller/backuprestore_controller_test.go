@@ -27,7 +27,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	backupv1 "github.com/AntonShadrinNN/oiler-backup/api/v1"
+	backupv1 "github.com/oiler-backup/core/api/v1"
 )
 
 var _ = Describe("BackupRestore Controller", func() {

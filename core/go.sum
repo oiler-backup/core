@@ -1,9 +1,3 @@
-github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250514170202-9ac657ef451d h1:hUnh1Qhj7JYgpe+dGNU58wNK7fg0Qt7NsWQjGWcSXuY=
-github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250514170202-9ac657ef451d/go.mod h1:J/W7Gy5yx8Zpg7OrJvzi+ODdYzMrlN2W9YJtMbEtjYA=
-github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250515223830-4b18d0bc1942 h1:g+wRvucLbSj1R3Fr7ioCuiFIIzpFeLylkcPYa2QhamQ=
-github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250515223830-4b18d0bc1942/go.mod h1:J/W7Gy5yx8Zpg7OrJvzi+ODdYzMrlN2W9YJtMbEtjYA=
-github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250517154815-c71dc876f7ee h1:NC4InHREuk8BVBVFv2eUbwdKKzToHXgvwhuL/gkRGQo=
-github.com/AntonShadrinNN/oiler-backup-base v0.0.0-20250517154815-c71dc876f7ee/go.mod h1:fa+kFmyGRzlbYf5t7vCD86Lzb+JIHpwz91SB4IyRyt0=
 github.com/antlr4-go/antlr/v4 v4.13.0 h1:lxCg3LAv+EUK6t1i0y1V6/SLeUi0eKEKdhQAlS8TVTI=
 github.com/antlr4-go/antlr/v4 v4.13.0/go.mod h1:pfChB/xh/Unjila75QW7+VU4TSnWnnk9UTnmpPaOR2g=
 github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a h1:idn718Q4B6AGu/h5Sxe66HYVdqdGu2l9Iebqhi/AEoA=
@@ -97,6 +91,8 @@ github.com/modern-go/reflect2 v1.0.2 h1:xBagoLtFs94CBntxluKeaWgTMpvLxC4ur3nMaC9G
 github.com/modern-go/reflect2 v1.0.2/go.mod h1:yWuevngMOJpCy52FWWMvUC8ws7m/LJsjYzDa0/r8luk=
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq1c1nUAm88MOHcQC9l5mIlSMApZMrHA=
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
+github.com/oiler-backup/base v0.0.0-20250518145859-bf573dc47373 h1:SW37Ww//BSYFp9vDd+XTOWpXXWKrpGNXv57t225dvb4=
+github.com/oiler-backup/base v0.0.0-20250518145859-bf573dc47373/go.mod h1:cnX/aTCKneXdbk8dnN+2FuXKKmuy+UqJ+VbYozp6AEE=
 github.com/onsi/ginkgo/v2 v2.21.0 h1:7rg/4f3rB88pb5obDgNZrNHrQ4e6WpjonchcpuBRnZM=
 github.com/onsi/ginkgo/v2 v2.21.0/go.mod h1:7Du3c42kxCUegi0IImZ1wUQzMBVecgIHjR1C+NkhLQo=
 github.com/onsi/gomega v1.35.1 h1:Cwbd75ZBPxFSuZ6T+rN/WCb/gOc6YgFBXLlZLhC7Ds4=

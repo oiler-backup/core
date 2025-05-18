@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 
-	"github.com/AntonShadrinNN/oiler-backup-base/servers/backup/envgetters"
+	"github.com/oiler-backup/base/servers/backup/envgetters"
 	"github.com/stretchr/testify/mock"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"

@@ -12,8 +12,8 @@ import (
 	"backuper/internal/config"
 	"backuper/pkg/uploader"
 
-	loggerbase "github.com/AntonShadrinNN/oiler-backup-base/logger"
-	metricsbase "github.com/AntonShadrinNN/oiler-backup-base/metrics"
+	loggerbase "github.com/oiler-backup/base/logger"
+	metricsbase "github.com/oiler-backup/base/metrics"
 	"go.uber.org/zap"
 )
 
