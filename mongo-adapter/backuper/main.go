@@ -51,7 +51,7 @@ func main() {
 	// Backward metrics reporter
 	metricsReporter = metricsbase.NewMetricsReporter(cfg.CoreAddr, false)
 
-	err = backuper.Backup(ctx)
+	err = backuper.Backup(ctx, cfg.Secure)
 	if err != nil {
 		mustProccessErrors("Failed to perform backup", err)
 	}

@@ -44,7 +44,7 @@ func NewBackuper(dbHost, dbPort, dbUser, dbPassword, dbName, backupPath string) 
 }
 
 // Backup performs backup of MySQL Database by using mysqldump CLI.
-func (b Backuper) Backup(ctx context.Context) error {
+func (b Backuper) Backup(ctx context.Context, secure bool) error {
 	connStr := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", b.dbUser, b.dbPass, b.dbHost, b.dbPort, b.dbName)
 
 	db, err := sql.Open("mysql", connStr)
@@ -63,14 +63,21 @@ func (b Backuper) Backup(ctx context.Context) error {
 		return buildBackupError("Failed to connect to database: %+v", err)
 	}
 
-	dumpCmd := exec.CommandContext(ctx, "mysqldump",
+	args := []string{
 		"-h", b.dbHost,
 		"-P", b.dbPort,
 		"-u", b.dbUser,
 		fmt.Sprintf("-p%s", b.dbPass),
 		b.dbName,
-		"--ssl-mode=DISABLED",
 		"--result-file", b.backupPath,
+	}
+	if secure {
+		args = append(args, "--ssl-mode=REQUIRED")
+	} else {
+		args = append(args, "--ssl-mode=DISABLED")
+	}
+	dumpCmd := exec.CommandContext(ctx, "mysqldump",
+		args...,
 	)
 
 	output, err := dumpCmd.CombinedOutput()

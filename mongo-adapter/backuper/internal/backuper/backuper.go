@@ -41,8 +41,8 @@ func NewBackuper(dbHost, dbPort, dbUser, dbPassword, dbName, backupPath string) 
 }
 
 // Backup performs backup of Mongo Database by using mongodump CLI.
-func (b Backuper) Backup(ctx context.Context) error {
-	dumpCmd := exec.CommandContext(ctx, "mongodump",
+func (b Backuper) Backup(ctx context.Context, secure bool) error {
+	args := []string{
 		"--host", b.dbHost,
 		"--port", b.dbPort,
 		"--username", b.dbUser,
@@ -50,7 +50,13 @@ func (b Backuper) Backup(ctx context.Context) error {
 		"--db", b.dbName,
 		"--authenticationDatabase", "admin",
 		fmt.Sprint("--archive=", b.backupPath),
-		"--tlsInsecure",
+	}
+
+	if secure {
+		args = append(args, "--tls-insecure")
+	}
+	dumpCmd := exec.CommandContext(ctx, "mongodump",
+		args...,
 	)
 
 	output, err := dumpCmd.CombinedOutput()
