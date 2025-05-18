@@ -43,7 +43,7 @@ func NewBackuper(dbHost, dbPort, dbUser, dbPassword, dbName, backupPath string) 
 	}
 }
 
-// Backup performs backup of PostgreSQL Database by using mysqldump CLI.
+// Backup performs backup of MySQL Database by using mysqldump CLI.
 func (b Backuper) Backup(ctx context.Context) error {
 	connStr := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", b.dbUser, b.dbPass, b.dbHost, b.dbPort, b.dbName)
 
