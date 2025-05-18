@@ -55,18 +55,29 @@ var (
 )
 
 var (
-	successfulBackups = prometheus.NewCounter(
+	successfulBackups = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "backup_requests_successful_total",
 			Help: "Total number of successful backup requests",
 		},
+		[]string{"backup_name"},
 	)
 
-	failedBackups = prometheus.NewCounter(
+	failedBackups = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "backup_requests_failed_total",
 			Help: "Total number of failed backup requests",
 		},
+		[]string{"backup_name"},
+	)
+
+	backupsDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "backup_duration_seconds",
+			Help:    "Duration of backup operations in seconds",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"backup_name"},
 	)
 )
 
@@ -77,13 +88,17 @@ type server struct {
 
 // ReportSuccessfulBackup handles incoming gRPC requests
 func (s *server) ReportSuccessfulBackup(ctx context.Context, req *pb.BackupMetrics) (*emptypb.Empty, error) {
-	log.Printf("Received successful backup report: %s at %d", req.BackupName, req.Timestamp)
+	log.Printf("Received successful backup report: %s at %d", req.BackupName, req.TimeElapsed)
 
+	labels := prometheus.Labels{"backup_name": req.BackupName}
 	if req.Success {
-		successfulBackups.Inc()
+		successfulBackups.With(labels).Inc()
 	} else {
-		failedBackups.Inc()
+		failedBackups.With(labels).Inc()
 	}
+
+	duration := float64(req.TimeElapsed) / 1000.0
+	backupsDuration.With(labels).Observe(duration)
 
 	return &emptypb.Empty{}, nil
 }
@@ -107,7 +122,9 @@ func init() {
 	utilruntime.Must(backupv1.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 
-	metrics.Registry.MustRegister(successfulBackups, failedBackups)
+	metrics.Registry.MustRegister(successfulBackups)
+	metrics.Registry.MustRegister(failedBackups)
+	metrics.Registry.MustRegister(backupsDuration)
 
 }
 

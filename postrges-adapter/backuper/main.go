@@ -52,6 +52,7 @@ func main() {
 	// Backward metrics reporter
 	metricsReporter = metricsbase.NewMetricsReporter(cfg.CoreAddr, false)
 
+	start := time.Now()
 	err = backuper.Backup(ctx, cfg.Secure)
 	if err != nil {
 		mustProccessErrors("Failed to perform backup", err)
@@ -61,8 +62,8 @@ func main() {
 	if err != nil {
 		mustProccessErrors("Failed to perform upload", err)
 	}
-
-	err = metricsReporter.ReportStatus(ctx, backupName, true, time.Now().Unix())
+	timeElapsed := time.Since(start)
+	err = metricsReporter.ReportStatus(ctx, backupName, true, int64(timeElapsed.Milliseconds()))
 	if err != nil {
 		logger.Fatalf("Failed to report successful status %w\n", err)
 	}
