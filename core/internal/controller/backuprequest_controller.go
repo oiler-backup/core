@@ -77,9 +77,9 @@ func (r *BackupRequestReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
-	controllerAddress, exists := dbControllers[backupRequest.Spec.DatabaseType]
+	controllerAddress, exists := dbControllers[backupRequest.Spec.DbSpec.DbType]
 	if !exists {
-		err := ErrNotSupported(backupRequest.Spec.DatabaseType)
+		err := ErrNotSupported(backupRequest.Spec.DbSpec.DbType)
 		log.Error(err, "Make sure to update database-config cm")
 		innerErr := r.setFailed(ctx, req.NamespacedName)
 		if innerErr != nil {
@@ -198,18 +198,17 @@ func (r *BackupRequestReconciler) delegateToController(ctx context.Context, cont
 	client := pb.NewBackupServiceClient(conn)
 
 	req := &pb.BackupRequest{
-		DbUri:          backupRequest.Spec.DatabaseURI,
-		DbPort:         int64(backupRequest.Spec.DatabasePort),
-		DbUser:         backupRequest.Spec.DatabaseUser,
-		DbPass:         backupRequest.Spec.DatabasePass,
-		DbName:         backupRequest.Spec.DatabaseName,
-		DatabaseType:   backupRequest.Spec.DatabaseType,
+		DbUri:          backupRequest.Spec.DbSpec.URI,
+		DbPort:         int64(backupRequest.Spec.DbSpec.Port),
+		DbUser:         backupRequest.Spec.DbSpec.User,
+		DbPass:         backupRequest.Spec.DbSpec.Pass,
+		DbName:         backupRequest.Spec.DbSpec.DbName,
+		DatabaseType:   backupRequest.Spec.DbSpec.DbType,
 		Schedule:       backupRequest.Spec.Schedule,
-		StorageClass:   backupRequest.Spec.StorageClass,
-		S3Endpoint:     backupRequest.Spec.S3Endpoint,
-		S3AccessKey:    backupRequest.Spec.S3AccessKey,
-		S3SecretKey:    backupRequest.Spec.S3SecretKey,
-		S3BucketName:   backupRequest.Spec.S3BucketName,
+		S3Endpoint:     backupRequest.Spec.S3Spec.Endpoint,
+		S3AccessKey:    backupRequest.Spec.S3Spec.Auth.AccessKey,
+		S3SecretKey:    backupRequest.Spec.S3Spec.Auth.SecretKey,
+		S3BucketName:   backupRequest.Spec.S3Spec.BucketName,
 		CoreAddr:       os.Getenv("CORE_ADDR"),
 		MaxBackupCount: backupRequest.Spec.MaxBackupCount,
 	}
@@ -258,18 +257,17 @@ func (r *BackupRequestReconciler) updateCronJob(ctx context.Context, controllerA
 	client := pb.NewBackupServiceClient(conn)
 
 	br := &pb.BackupRequest{
-		DbUri:          backupRequest.Spec.DatabaseURI,
-		DbPort:         int64(backupRequest.Spec.DatabasePort),
-		DbUser:         backupRequest.Spec.DatabaseUser,
-		DbPass:         backupRequest.Spec.DatabasePass,
-		DbName:         backupRequest.Spec.DatabaseName,
-		DatabaseType:   backupRequest.Spec.DatabaseType,
+		DbUri:          backupRequest.Spec.DbSpec.URI,
+		DbPort:         int64(backupRequest.Spec.DbSpec.Port),
+		DbUser:         backupRequest.Spec.DbSpec.User,
+		DbPass:         backupRequest.Spec.DbSpec.Pass,
+		DbName:         backupRequest.Spec.DbSpec.DbName,
+		DatabaseType:   backupRequest.Spec.DbSpec.DbType,
 		Schedule:       backupRequest.Spec.Schedule,
-		StorageClass:   backupRequest.Spec.StorageClass,
-		S3Endpoint:     backupRequest.Spec.S3Endpoint,
-		S3AccessKey:    backupRequest.Spec.S3AccessKey,
-		S3SecretKey:    backupRequest.Spec.S3SecretKey,
-		S3BucketName:   backupRequest.Spec.S3BucketName,
+		S3Endpoint:     backupRequest.Spec.S3Spec.Endpoint,
+		S3AccessKey:    backupRequest.Spec.S3Spec.Auth.AccessKey,
+		S3SecretKey:    backupRequest.Spec.S3Spec.Auth.SecretKey,
+		S3BucketName:   backupRequest.Spec.S3Spec.BucketName,
 		CoreAddr:       os.Getenv("CORE_ADDR"),
 		MaxBackupCount: backupRequest.Spec.MaxBackupCount,
 	}

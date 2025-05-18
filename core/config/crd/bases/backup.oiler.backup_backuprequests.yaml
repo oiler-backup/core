@@ -41,47 +41,59 @@ spec:
           spec:
             description: BackupRequestSpec defines the desired state of BackupRequest.
             properties:
-              databaseName:
-                type: string
-              databasePass:
-                type: string
-              databasePort:
-                type: integer
-              databaseType:
-                type: string
-              databaseUser:
-                type: string
-              dbUri:
-                type: string
+              dbSpec:
+                properties:
+                  dbName:
+                    type: string
+                  dbType:
+                    type: string
+                  pass:
+                    type: string
+                  port:
+                    type: integer
+                  uri:
+                    type: string
+                  user:
+                    type: string
+                required:
+                - dbName
+                - dbType
+                - pass
+                - port
+                - uri
+                - user
+                type: object
               maxBackupCount:
                 format: int64
                 type: integer
-              s3AccessKey:
-                type: string
-              s3BucketName:
-                type: string
-              s3Endpoint:
-                type: string
-              s3SecretKey:
-                type: string
+              s3Spec:
+                properties:
+                  auth:
+                    properties:
+                      accessKey:
+                        type: string
+                      secretKey:
+                        type: string
+                    required:
+                    - accessKey
+                    - secretKey
+                    type: object
+                  bucketName:
+                    type: string
+                  endpoint:
+                    type: string
+                required:
+                - auth
+                - bucketName
+                - endpoint
+                type: object
               schedule:
                 type: string
-              storageClass:
-                type: string
             required:
-            - databaseName
-            - databasePass
-            - databasePort
-            - databaseType
-            - databaseUser
-            - dbUri
+            - dbSpec
             - maxBackupCount
-            - s3AccessKey
-            - s3BucketName
-            - s3Endpoint
-            - s3SecretKey
+            - s3Spec
             - schedule
-            - storageClass
             type: object
           status:
             description: BackupRequestStatus defines the observed state of BackupRequest.
