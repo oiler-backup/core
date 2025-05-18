@@ -9,7 +9,7 @@ import (
 type ErrBackup = error
 
 func buildBackupError(msg string, opts ...any) ErrBackup {
-	return fmt.Errorf(msg, opts)
+	return fmt.Errorf(msg, opts...)
 }
 
 type Backuper struct {
@@ -42,11 +42,12 @@ func (b Backuper) Backup(ctx context.Context) error {
 		"--db", b.dbName,
 		"--authenticationDatabase", "admin",
 		fmt.Sprint("--archive=", b.backupPath),
+		"--tlsInsecure",
 	)
 
 	output, err := dumpCmd.CombinedOutput()
 	if err != nil {
-		return buildBackupError("Failed executing pg_dump: %+v\n.Output:%s", err, string(output))
+		return buildBackupError("Failed executing mongodump: %+v\n.Output:%s", err, string(output))
 	}
 	return nil
 }
