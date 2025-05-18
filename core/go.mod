@@ -4,7 +4,7 @@ go 1.24.2
 
 require (
 	github.com/caarlos0/env/v11 v11.3.1
-	github.com/oiler-backup/base v0.0.0-20250518145859-bf573dc47373
+	github.com/oiler-backup/base v0.0.0-20250518211849-6530e6e0b37b
 	github.com/onsi/ginkgo/v2 v2.22.0
 	github.com/onsi/gomega v1.36.1
 	github.com/prometheus/client_golang v1.19.1

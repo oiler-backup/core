@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: backuprequest-sample
 spec:
-  dbUri: "10.97.152.109"
+  dbUri: "postgres.svc.cluster.local"
   databasePort: 5432
   databaseUser: "admin"
   databasePass: "password"
@@ -14,7 +14,7 @@ spec:
   databaseType: "postgres"
   schedule: "*/1 * * * *"
   storageClass: "s3"
-  s3Endpoint: "https://10.99.152.233:443"
+  s3Endpoint: "https://minio.tenant-ns.svc.cluster.local:443"
   s3AccessKey: 14PcLhk3HKXJ3Jdq88Vg
   s3SecretKey: eOAAaPLoJ0RevDmmcj6gS4fjPbTz1iqrBt7dm2Id
   maxBackupCount: 2
