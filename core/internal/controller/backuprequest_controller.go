@@ -189,8 +189,12 @@ func (r *BackupRequestReconciler) delegateToController(ctx context.Context, cont
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to %s: %w", controllerAddress, err)
 	}
-	defer conn.Close()
-
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			panic(err)
+		}
+	}()
 	client := pb.NewBackupServiceClient(conn)
 
 	req := &pb.BackupRequest{
@@ -244,7 +248,12 @@ func (r *BackupRequestReconciler) updateCronJob(ctx context.Context, controllerA
 	if err != nil {
 		return fmt.Errorf("failed to connect to %s: %w", controllerAddress, err)
 	}
-	defer conn.Close()
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	client := pb.NewBackupServiceClient(conn)
 

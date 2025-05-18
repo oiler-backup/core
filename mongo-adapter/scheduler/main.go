@@ -32,7 +32,10 @@ func main() {
 
 	grpcServer := grpc.NewServer()
 
-	server.RegisterBackupServer(grpcServer, cfg.SystemNamespace, cfg.BackuperVersion, cfg.RestorerVersion)
+	err = server.RegisterBackupServer(grpcServer, cfg.SystemNamespace, cfg.BackuperVersion, cfg.RestorerVersion)
+	if err != nil {
+		logger.Panicw("Failed to register backup server", "error", err)
+	}
 	logger.Infof("Running grpc server on port %d...", cfg.Port)
 	if err := grpcServer.Serve(lis); err != nil {
 		logger.Fatalw("Failed running server", "error", err)
