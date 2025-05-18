@@ -15,8 +15,12 @@ import (
 	eg "github.com/AntonShadrinNN/oiler-backup-base/servers/backup/envgetters"
 )
 
+// An ErrBackupServer is required for more verbosity.
 type ErrBackupServer = error
 
+// A BackupServer is an implementation of gRPC server to
+// accept requests from Kubernetes Operator Core
+// and create underlying resources.
 type BackupServer struct {
 	pb.UnimplementedBackupServiceServer
 	kubeClient    *kubernetes.Clientset
@@ -27,6 +31,9 @@ type BackupServer struct {
 	jobsStub      serversbase.IJobStub
 }
 
+// NewBackupServer is a constructor for BackupServer.
+// Accepts systemNamespace where underlying resources will be created.
+// backuperImg and restorerImg will be used as images in Kubernetes pods
 func NewBackupServer(systemNamespace, backuperImg, restorerImg string) (*BackupServer, error) { // coverage-ignore
 	config, err := rest.InClusterConfig()
 	if err != nil {
@@ -65,6 +72,9 @@ func RegisterBackupServer(grpcServer *grpc.Server, systemNamespace, backuperImag
 	return nil
 }
 
+// Backup creates CronJob with backuper image.
+// Validates CronJob is actually created.
+// Returns Status "Exists" in case of already created resource.
 func (s *BackupServer) Backup(ctx context.Context, req *pb.BackupRequest) (*pb.BackupResponse, error) {
 	cj := s.jobsStub.BuildBackuperCj(
 		req.Schedule,
@@ -106,6 +116,8 @@ func (s *BackupServer) Backup(ctx context.Context, req *pb.BackupRequest) (*pb.B
 	}, nil
 }
 
+// Update performs update of a CronJob with backuper.
+// Currently only changes environment variables.
 func (s *BackupServer) Update(ctx context.Context, req *pb.UpdateBackupRequest) (*pb.BackupResponse, error) {
 	err := s.jobsCreator.UpdateCronJob(
 		ctx,
@@ -142,6 +154,7 @@ func (s *BackupServer) Update(ctx context.Context, req *pb.UpdateBackupRequest) 
 	}, nil
 }
 
+// Restore restores backup from s3-compatible storage.
 func (s *BackupServer) Restore(ctx context.Context, req *pb.BackupRestore) (*pb.BackupRestoreResponse, error) {
 	job := s.jobsStub.BuildRestorerJob(
 		eg.NewEnvGetterMerger([]eg.EnvGetter{
