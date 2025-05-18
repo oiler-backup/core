@@ -1,3 +1,4 @@
+// Package backuper contains entities to perform backup of Mongo Database.
 package backuper
 
 import (
@@ -6,12 +7,16 @@ import (
 	"os/exec"
 )
 
+// An ErrBackup is required for more verbosity.
 type ErrBackup = error
 
+// buildBackupError builds ErrBackup.
+// Operates over f-strings.
 func buildBackupError(msg string, opts ...any) ErrBackup {
 	return fmt.Errorf(msg, opts...)
 }
 
+// A Backuper performs backup of Mongo Database.
 type Backuper struct {
 	dbHost string
 	dbPort string
@@ -22,6 +27,8 @@ type Backuper struct {
 	backupPath string
 }
 
+// NewBackuper is a constructor for Backuper.
+// Accepts parameters to connect to database and backupPath where backup will be stored locally.
 func NewBackuper(dbHost, dbPort, dbUser, dbPassword, dbName, backupPath string) Backuper {
 	return Backuper{
 		dbHost:     dbHost,
@@ -33,6 +40,7 @@ func NewBackuper(dbHost, dbPort, dbUser, dbPassword, dbName, backupPath string) 
 	}
 }
 
+// Backup performs backup of Mongo Database by using mongodump CLI.
 func (b Backuper) Backup(ctx context.Context) error {
 	dumpCmd := exec.CommandContext(ctx, "mongodump",
 		"--host", b.dbHost,
