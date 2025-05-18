@@ -35,8 +35,12 @@ func Test_Backup_CreatesValidDump(t *testing.T) {
 		Started:          true,
 	})
 	require.NoError(t, err)
-	defer postgresC.Terminate(ctx)
-
+	defer func() {
+		err := postgresC.Terminate(ctx)
+		if err != nil {
+			panic(err)
+		}
+	}()
 	host, _ := postgresC.ContainerIP(ctx)
 
 	tempDir := t.TempDir()

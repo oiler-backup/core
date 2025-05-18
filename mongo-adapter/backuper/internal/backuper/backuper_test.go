@@ -32,7 +32,12 @@ func Test_Backup_CreatesValidDump(t *testing.T) {
 		Started:          true,
 	})
 	require.NoError(t, err)
-	defer mongoC.Terminate(ctx)
+	defer func() {
+		err := mongoC.Terminate(ctx)
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	host, _ := mongoC.ContainerIP(ctx)
 

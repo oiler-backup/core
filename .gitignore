@@ -1,3 +1,4 @@
 tenant/
 operator/
+core/bin/k8s/
 *.yaml

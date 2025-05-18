@@ -39,8 +39,8 @@ type BackupRequestSpec struct {
 }
 
 type CreatedCronJobData struct {
-	Name      string `json:"name,required"`
-	Namespace string `json:"namespace,required"`
+	Name      string `json:"name,required"`      //nolint:staticcheck
+	Namespace string `json:"namespace,required"` //nolint:staticcheck
 }
 
 // BackupRequestStatus defines the observed state of BackupRequest.

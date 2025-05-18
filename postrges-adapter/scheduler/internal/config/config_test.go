@@ -10,10 +10,14 @@ import (
 
 func Test_GetConfig_Success(t *testing.T) {
 	os.Clearenv()
-	os.Setenv("SYSTEM_NAMESPACE", "test-system")
-	os.Setenv("BACKUPER_VERSION", "myorg/my-backuper:latest")
-	os.Setenv("RESTORER_VERSION", "myorg/my-restorer:latest")
-	os.Setenv("PORT", "8080")
+	err := os.Setenv("SYSTEM_NAMESPACE", "test-system")
+	require.NoError(t, err)
+	err = os.Setenv("BACKUPER_VERSION", "myorg/my-backuper:latest")
+	require.NoError(t, err)
+	err = os.Setenv("RESTORER_VERSION", "myorg/my-restorer:latest")
+	require.NoError(t, err)
+	err = os.Setenv("PORT", "8080")
+	require.NoError(t, err)
 
 	cfg, err := GetConfig()
 
@@ -35,7 +39,8 @@ func Test_GetConfig_MissingRequiredField(t *testing.T) {
 
 func Test_GetConfig_UsesDefaults(t *testing.T) {
 	os.Clearenv()
-	os.Setenv("SYSTEM_NAMESPACE", "default-system")
+	err := os.Setenv("SYSTEM_NAMESPACE", "default-system")
+	require.NoError(t, err)
 
 	cfg, err := GetConfig()
 
@@ -48,12 +53,14 @@ func Test_GetConfig_UsesDefaults(t *testing.T) {
 
 func Test_GetConfig_DefaultsWithOverride(t *testing.T) {
 	os.Clearenv()
-	os.Setenv("SYSTEM_NAMESPACE", "default-system")
-	os.Setenv("PORT", "9090")
+	err := os.Setenv("SYSTEM_NAMESPACE", "default-system")
+	require.NoError(t, err)
+	err = os.Setenv("PORT", "9090")
+	require.NoError(t, err)
 
 	cfg, err := GetConfig()
-
 	require.NoError(t, err)
+
 	assert.Equal(t, "default-system", cfg.SystemNamespace)
 	assert.Equal(t, "ashadrinnn/pgbackuper:0.0.1-0", cfg.BackuperVersion)
 	assert.Equal(t, "sveb00/pgrestorer:0.0.1-1", cfg.RestorerVersion)

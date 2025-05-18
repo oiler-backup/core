@@ -54,8 +54,12 @@ func (b Backuper) Backup(ctx context.Context) error {
 	if err != nil { // coverage-ignore
 		return buildBackupError("Failed to open driver for database: %+v", err)
 	}
-	defer db.Close()
-
+	defer func() {
+		err := db.Close()
+		if err != nil {
+			panic(err)
+		}
+	}()
 	err = db.PingContext(ctx)
 	if err != nil { // coverage-ignore
 		return buildBackupError("Failed to connect to database: %+v", err)

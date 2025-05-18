@@ -86,7 +86,7 @@ func (r *BackupRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	job, err := r.delegateToController(ctx, controllerAddress, &backupRestore)
 	if errors.Is(err, ErrAlreadyExists) {
 		log.Info("Job for BackupRestore %s already exists", "name", backupRestore.Name)
-		jExists = true
+		jExists = true //nolint:ineffassign
 		return ctrl.Result{}, nil
 	} else if err != nil {
 		log.Error(err, "Cannot delegate to controller")
@@ -151,7 +151,12 @@ func (r *BackupRestoreReconciler) delegateToController(ctx context.Context, cont
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to %s: %w", controllerAddress, err)
 	}
-	defer conn.Close()
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	client := pb.NewBackupServiceClient(conn)
 
