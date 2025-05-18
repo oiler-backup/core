@@ -53,7 +53,7 @@ func Test_Backup_CreatesValidDump(t *testing.T) {
 		backupFile,
 	)
 
-	err = b.Backup(ctx)
+	err = b.Backup(ctx, false)
 	require.NoError(t, err)
 
 	fileInfo, err := os.Stat(backupFile)

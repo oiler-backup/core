@@ -45,7 +45,7 @@ func NewBackuper(dbHost, dbPort, dbUser, dbPassword, dbName, backupPath string) 
 }
 
 // Backup performs backup of PostgreSQL Database by using pg_dump CLI.
-func (b Backuper) Backup(ctx context.Context) error {
+func (b Backuper) Backup(ctx context.Context, secure bool) error {
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		b.dbHost, b.dbPort, b.dbUser, b.dbPass, b.dbName,
 	)
@@ -65,7 +65,7 @@ func (b Backuper) Backup(ctx context.Context) error {
 		return buildBackupError("Failed to connect to database: %+v", err)
 	}
 
-	dumpCmd := exec.CommandContext(ctx, "pg_dump",
+	args := []string{
 		"-h", b.dbHost,
 		"-p", b.dbPort,
 		"-U", b.dbUser,
@@ -73,6 +73,10 @@ func (b Backuper) Backup(ctx context.Context) error {
 		"-F",
 		"c",
 		"-f", b.backupPath,
+	}
+
+	dumpCmd := exec.CommandContext(ctx, "pg_dump",
+		args...,
 	)
 	dumpCmd.Env = append(os.Environ(), fmt.Sprintf("PGPASSWORD=%s", b.dbPass))
 
