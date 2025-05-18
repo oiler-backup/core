@@ -20,15 +20,14 @@ type ErrBackupServer = error
 type BackupServer struct {
 	pb.UnimplementedBackupServiceServer
 	kubeClient    *kubernetes.Clientset
-	jobsCreator   serversbase.JobsCreator
+	jobsCreator   serversbase.IJobsCreator
 	namespace     string
 	backuperImage string
 	restorerImage string
-	coreAddr      string
-	jobsStub      serversbase.JobsStub
+	jobsStub      serversbase.IJobStub
 }
 
-func NewBackupServer(systemNamespace, backuperImg, restorerImg string) (*BackupServer, error) {
+func NewBackupServer(systemNamespace, backuperImg, restorerImg string) (*BackupServer, error) { // coverage-ignore
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load Kubernetes config: %w", err)
@@ -56,7 +55,7 @@ func NewBackupServer(systemNamespace, backuperImg, restorerImg string) (*BackupS
 	}, nil
 }
 
-func RegisterBackupServer(grpcServer *grpc.Server, systemNamespace, backuperImage, restorerImage string) error {
+func RegisterBackupServer(grpcServer *grpc.Server, systemNamespace, backuperImage, restorerImage string) error { // coverage-ignore
 	server, err := NewBackupServer(systemNamespace, backuperImage, restorerImage)
 	if err != nil {
 		return err
@@ -104,6 +103,42 @@ func (s *BackupServer) Backup(ctx context.Context, req *pb.BackupRequest) (*pb.B
 		Status:           "CronJob created successfully",
 		CronjobName:      name,
 		CronjobNamespace: namespace,
+	}, nil
+}
+
+func (s *BackupServer) Update(ctx context.Context, req *pb.UpdateBackupRequest) (*pb.BackupResponse, error) {
+	err := s.jobsCreator.UpdateCronJob(
+		ctx,
+		req.CronjobName,
+		req.CronjobNamespace,
+		eg.NewEnvGetterMerger([]eg.EnvGetter{
+			eg.CommonEnvGetter{
+				DbUri:        req.Request.DbUri,
+				DbPort:       fmt.Sprint(req.Request.DbPort),
+				DbUser:       req.Request.DbUser,
+				DbPass:       req.Request.DbPass,
+				DbName:       req.Request.DbName,
+				S3Endpoint:   req.Request.S3Endpoint,
+				S3AccessKey:  req.Request.S3AccessKey,
+				S3SecretKey:  req.Request.S3SecretKey,
+				S3BucketName: req.Request.S3BucketName,
+				CoreAddr:     req.Request.CoreAddr,
+			},
+			eg.BackuperEnvGetter{
+				MaxBackupCount: int(req.Request.MaxBackupCount),
+			},
+		}).GetEnvs(),
+	)
+	if err != nil {
+		return &pb.BackupResponse{
+			Status: "Failed to update cronjob",
+		}, err
+	}
+
+	return &pb.BackupResponse{
+		Status:           "CronJob updated successfully",
+		CronjobName:      req.CronjobName,
+		CronjobNamespace: req.CronjobNamespace,
 	}, nil
 }
 
