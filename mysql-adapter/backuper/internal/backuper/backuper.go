@@ -1,3 +1,4 @@
+// Package backuper contains entities to perform backup of MySQL Database.
 package backuper
 
 import (
@@ -9,12 +10,16 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+// An ErrBackup is required for more verbosity.
 type ErrBackup = error
 
+// buildBackupError builds ErrBackup.
+// Operates over f-strings.
 func buildBackupError(msg string, opts ...any) ErrBackup {
 	return fmt.Errorf(msg, opts...)
 }
 
+// A Backuper performs backup of MySQL Database.
 type Backuper struct {
 	dbHost string
 	dbPort string
@@ -25,6 +30,8 @@ type Backuper struct {
 	backupPath string
 }
 
+// NewBackuper is a constructor for Backuper.
+// Accepts parameters to connect to database and backupPath where backup will be stored locally.
 func NewBackuper(dbHost, dbPort, dbUser, dbPassword, dbName, backupPath string) Backuper {
 	return Backuper{
 		dbHost:     dbHost,
@@ -36,6 +43,7 @@ func NewBackuper(dbHost, dbPort, dbUser, dbPassword, dbName, backupPath string) 
 	}
 }
 
+// Backup performs backup of PostgreSQL Database by using mysqldump CLI.
 func (b Backuper) Backup(ctx context.Context) error {
 	connStr := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", b.dbUser, b.dbPass, b.dbHost, b.dbPort, b.dbName)
 
