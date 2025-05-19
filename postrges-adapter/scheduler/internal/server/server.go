@@ -168,7 +168,7 @@ func (s *BackupServer) Restore(ctx context.Context, req *pb.BackupRestore) (*pb.
 				S3AccessKey:  req.S3AccessKey,
 				S3SecretKey:  req.S3SecretKey,
 				S3BucketName: req.S3BucketName,
-				// CoreAddr:     req.CoreAddr, // TODO
+				CoreAddr:     req.CoreAddr,
 			},
 			eg.RestorerEnvGetter{
 				BackupRevision: req.BackupRevision,

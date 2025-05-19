@@ -1,8 +1,8 @@
 sheduler:
-  serviceAccountName: scheduler-sa
-  image: "ashadrinnn/pgad:0.0.1-5"
+  serviceAccountName: postgres-scheduler-sa
+  image: "sveb00/pgad:0.0.1-2"
   imagePullPolicy: Always
-  name: scheduler
+  name: postgres-scheduler
   namespace: oiler-backup-system
   port: 50051
   replicas: 1
