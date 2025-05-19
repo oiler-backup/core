@@ -1,0 +1,21 @@
+apiVersion: backup.oiler.backup/v1
+kind: BackupRequest
+metadata:
+  labels:
+    app.kubernetes.io/name: oiler-backup
+    app.kubernetes.io/managed-by: kustomize
+  name: backuprequest-sample
+spec:
+  dbUri: "10.101.131.73"
+  databasePort: 27017
+  databaseUser: "root"
+  databasePass: "root"
+  databaseName: "admin"
+  databaseType: "mongodb"
+  schedule: "*/1 * * * *"
+  storageClass: "s3"
+  s3Endpoint: "https://10.110.17.218:443"
+  s3AccessKey: Xm5g80QX3eZOgoa2spaK
+  s3SecretKey: PGNmy6mXm8dyBcrDYD6xwXkrvcEaeP2gCtCVt7OQ
+  maxBackupCount: 2
+  s3BucketName: test

@@ -1,0 +1,21 @@
+apiVersion: backup.oiler.backup/v1
+kind: BackupRestore
+metadata:
+  labels:
+    app.kubernetes.io/name: oiler-backup
+    app.kubernetes.io/managed-by: kustomize
+  name: backuprestore-sample
+spec:
+  dbUri: "10.101.131.73"
+  databasePort: 27017
+  databaseUser: "root"
+  databasePass: "root"
+  databaseName: "admin"
+  databaseType: "mongodb"
+  s3Endpoint: "https://10.110.17.218:443"
+  s3AccessKey: Xm5g80QX3eZOgoa2spaK
+  s3SecretKey: PGNmy6mXm8dyBcrDYD6xwXkrvcEaeP2gCtCVt7OQ
+  # s3AccessKey: minio
+  # s3SecretKey: minio123
+  s3BucketName: test
+  backupRevision: '6'

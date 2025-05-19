@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 
 	pb "github.com/oiler-backup/base/proto"
 	grpc "google.golang.org/grpc"
@@ -172,6 +173,7 @@ func (r *BackupRestoreReconciler) delegateToController(ctx context.Context, cont
 		S3SecretKey:    backupRestore.Spec.S3SecretKey,
 		S3BucketName:   backupRestore.Spec.S3BucketName,
 		BackupRevision: backupRestore.Spec.BackupRevision,
+		CoreAddr:       os.Getenv("CORE_ADDR"),
 	}
 
 	resp, err := client.Restore(ctx, req)
