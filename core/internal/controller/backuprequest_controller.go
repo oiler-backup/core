@@ -23,8 +23,8 @@ import (
 	"os"
 
 	pb "github.com/oiler-backup/base/proto"
-	backupv1 "github.com/oiler-backup/core/api/v1"
-	config "github.com/oiler-backup/core/internal/config"
+	backupv1 "github.com/oiler-backup/core/core/api/v1"
+	config "github.com/oiler-backup/core/core/internal/config"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	batchv1 "k8s.io/api/batch/v1"
