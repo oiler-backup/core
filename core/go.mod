@@ -1,4 +1,4 @@
-module github.com/oiler-backup/core
+module github.com/oiler-backup/core/core
 
 go 1.24.2
 

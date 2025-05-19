@@ -33,7 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	backupv1 "github.com/oiler-backup/core/api/v1"
+	backupv1 "github.com/oiler-backup/core/core/api/v1"
 )
 
 // BackupRestoreReconciler reconciles a BackupRestore object

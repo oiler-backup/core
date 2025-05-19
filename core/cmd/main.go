@@ -42,8 +42,8 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	backupv1 "github.com/oiler-backup/core/api/v1"
-	"github.com/oiler-backup/core/internal/controller"
+	backupv1 "github.com/oiler-backup/core/core/api/v1"
+	"github.com/oiler-backup/core/core/internal/controller"
 	"github.com/prometheus/client_golang/prometheus"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 	// +kubebuilder:scaffold:imports

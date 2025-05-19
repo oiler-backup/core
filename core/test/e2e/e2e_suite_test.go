@@ -25,7 +25,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/oiler-backup/core/test/utils"
+	"github.com/oiler-backup/core/core/test/utils"
 )
 
 var (
