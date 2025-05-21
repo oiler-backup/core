@@ -1,12 +1,12 @@
 sheduler:
   serviceAccountName: mysql-scheduler-sa
-  image: "ashadrinnn/mysqlad:0.0.1-1"
+  image: "sveb00/mysqlad:0.0.1-1"
   imagePullPolicy: Always
   name: mysql-scheduler
   namespace: oiler-backup-system
   port: 50051
   replicas: 1
 backuper:
-  image: "ashadrinnn/mysqlbackuper:0.0.1-0"
+  image: "ashadrinnn/mysqlbackuper:0.0.1-1"
 restorer:
   image: "sveb00/mysqlrestorer:0.0.1-1"

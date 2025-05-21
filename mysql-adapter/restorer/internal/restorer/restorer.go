@@ -4,10 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
 	"os/exec"
 
-	_ "github.com/lib/pq"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 type Restorer struct {
@@ -32,9 +31,9 @@ func NewRestorer(dbHost, dbPort, dbUser, dbPassword, dbName, backupPath string) 
 }
 
 func (r Restorer) Restore(ctx context.Context) error {
-	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		r.dbHost, r.dbPort, r.dbUser, r.dbPass, r.dbName)
-	db, err := sql.Open("postgres", connStr)
+	connStr := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", r.dbUser, r.dbPass, r.dbHost, r.dbPort, r.dbName)
+
+	db, err := sql.Open("mysql", connStr)
 	if err != nil {
 		return fmt.Errorf("failed to open driver for database: %v", err)
 	}
@@ -45,20 +44,18 @@ func (r Restorer) Restore(ctx context.Context) error {
 		return fmt.Errorf("failed to connect to database: %v", err)
 	}
 
-	cmd := exec.Command("pg_restore",
+	cmd := exec.Command("mysql",
 		"-h", r.dbHost,
-		"-p", r.dbPort,
-		"-U", r.dbUser,
-		"-d", r.dbName,
-		"--no-owner",
-		"--clean",
-		r.backupPath,
+		"-P", r.dbPort,
+		"-u", r.dbUser,
+		fmt.Sprintf("-p%s", r.dbPass),
+		r.dbName,
+		"<", r.backupPath,
 	)
-	cmd.Env = append(os.Environ(), fmt.Sprintf("PGPASSWORD=%s", r.dbPass))
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed executing pg_dump: %+v\n.Output:%s", err, string(output))
+		return fmt.Errorf("failed executing mysql restore: %+v\n.Output:%s", err, string(output))
 	}
 	return nil
 }
