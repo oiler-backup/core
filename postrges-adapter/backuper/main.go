@@ -10,11 +10,11 @@ import (
 
 	"backuper/internal/backuper"
 	"backuper/internal/config"
-	"backuper/pkg/uploader"
 
 	_ "github.com/lib/pq"
 	loggerbase "github.com/oiler-backup/base/logger"
 	metricsbase "github.com/oiler-backup/base/metrics"
+	s3base "github.com/oiler-backup/base/s3"
 	"go.uber.org/zap"
 )
 
@@ -47,7 +47,10 @@ func main() {
 	}
 	backupName = fmt.Sprintf("%s:%s/%s", cfg.DbHost, cfg.DbPort, cfg.DbName)
 	backuper := backuper.NewBackuper(cfg.DbHost, cfg.DbPort, cfg.DbUser, cfg.DbPassword, cfg.DbName, BACKUP_PATH)
-	uploader := uploader.NewUploadCleaner(cfg.S3Endpoint, cfg.S3AccessKey, cfg.S3SecretKey, cfg.S3BucketName, cfg.DbName, S3REGION, cfg.MaxBackupCount, cfg.Secure)
+	s3UploaderCleaner, err := s3base.NewS3UploadCleaner(ctx, cfg.S3Endpoint, cfg.S3AccessKey, cfg.S3SecretKey, S3REGION, cfg.Secure)
+	if err != nil {
+		mustProccessErrors("Failed to initialize s3Uploader: %+v", err)
+	}
 
 	// Backward metrics reporter
 	metricsReporter = metricsbase.NewMetricsReporter(cfg.CoreAddr, false)
@@ -58,10 +61,17 @@ func main() {
 		mustProccessErrors("Failed to perform backup", err)
 	}
 
-	err = uploader.Upload(ctx, BACKUP_PATH)
+	dateNow := time.Now().Format("2006-01-02-15-04-05")
+	backupFile, err := os.Open(BACKUP_PATH)
 	if err != nil {
-		mustProccessErrors("Failed to perform upload", err)
+		mustProccessErrors("Failed to open backupFile: %+v", err)
 	}
+	defer backupFile.Close()
+	err = s3UploaderCleaner.CleanAndUpload(ctx, cfg.S3BucketName, cfg.DbName, cfg.MaxBackupCount, fmt.Sprintf("%s/%s-backup.sql", cfg.DbName, dateNow), backupFile)
+	if err != nil {
+		mustProccessErrors("Failed to upload backup to S3: %+v", err)
+	}
+
 	timeElapsed := time.Since(start)
 	err = metricsReporter.ReportStatus(ctx, backupName, true, int64(timeElapsed.Milliseconds()))
 	if err != nil {
