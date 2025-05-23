@@ -8,7 +8,6 @@ import (
 	"restorer/internal/restorer"
 	"time"
 
-	_ "github.com/lib/pq"
 	loggerbase "github.com/oiler-backup/base/logger"
 	metricsbase "github.com/oiler-backup/base/metrics"
 	s3base "github.com/oiler-backup/base/s3"

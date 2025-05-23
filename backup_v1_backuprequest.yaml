@@ -7,17 +7,17 @@ metadata:
   name: backuprequest-sample
 spec:
   dbSpec:
-    uri: "postgres.default.svc.cluster.local"
-    port: 5432
-    user: "admin"
-    pass: "password"
-    dbName: "mydatabase"
-    dbType: "postgres"
+    uri: "10.100.159.91"
+    port: 3306
+    user: "testuser"
+    pass: "testpassword"
+    dbName: "testdb"
+    dbType: "mysql"
   s3Spec:
-    endpoint: "https://minio.tenant-ns.svc.cluster.local:443"
-    bucketName: "test"
+    endpoint: "https://10.109.69.152:443"
+    bucketName: "testdb"
     auth:
-      accessKey: "14PcLhk3HKXJ3Jdq88Vg"
-      secretKey: "eOAAaPLoJ0RevDmmcj6gS4fjPbTz1iqrBt7dm2Id"
+      accessKey: "9sDY9Qog7WQGMLrzqXIT"
+      secretKey: "KwvkghK4CiTmhfRm5vcMPxumUWIRuZmqS2ccJhYW"
   schedule: "*/1 * * * *"
   maxBackupCount: 2
