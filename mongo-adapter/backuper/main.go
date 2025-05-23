@@ -66,7 +66,7 @@ func main() {
 		mustProccessErrors("Failed to open backupFile: %+v", err)
 	}
 	defer backupFile.Close()
-	err = s3UploaderCleaner.CleanAndUpload(ctx, cfg.S3BucketName, cfg.DbName, cfg.MaxBackupCount, fmt.Sprintf("%s/%s-backup.sql", cfg.DbName, dateNow), backupFile)
+	err = s3UploaderCleaner.CleanAndUpload(ctx, cfg.S3BucketName, cfg.DbName, cfg.MaxBackupCount, fmt.Sprintf("%s/%s-backup.tar", cfg.DbName, dateNow), backupFile)
 	if err != nil {
 		mustProccessErrors("Failed to upload backup to S3: %+v", err)
 	}

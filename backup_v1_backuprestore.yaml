@@ -6,16 +6,16 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: backuprestore-sample
 spec:
-  dbUri: "10.100.159.91"
-  databasePort: 3306
-  databaseUser: "testuser"
-  databasePass: "testpassword"
-  databaseName: "testdb"
-  databaseType: "mysql"
+  dbUri: "10.107.243.182"
+  databasePort: 27017
+  databaseUser: "root"
+  databasePass: "root"
+  databaseName: "admin"
+  databaseType: "mongodb"
   s3Endpoint: "https://10.109.69.152:443"
-  s3AccessKey: 9sDY9Qog7WQGMLrzqXIT
-  s3SecretKey: KwvkghK4CiTmhfRm5vcMPxumUWIRuZmqS2ccJhYW
+  s3AccessKey: "u82r7zETfISCUoiF26lW"
+  s3SecretKey: "oMGiH3XwzygOGgK0NskgLOiZX8KARJ1G7OClrcdm"
   # s3AccessKey: minio
   # s3SecretKey: minio123
   s3BucketName: testdb
-  backupRevision: '0'
+  backupRevision: "1"

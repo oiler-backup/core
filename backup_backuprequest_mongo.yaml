@@ -6,16 +6,18 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: backuprequest-sample
 spec:
-  dbUri: "10.101.131.73"
-  databasePort: 27017
-  databaseUser: "root"
-  databasePass: "root"
-  databaseName: "admin"
-  databaseType: "mongodb"
+  dbSpec:
+    uri: "10.107.243.182"
+    port: 27017
+    user: "root"
+    pass: "root"
+    dbName: "admin"
+    dbType: "mongodb"
+  s3Spec:
+    endpoint: "https://10.109.69.152:443"
+    bucketName: "testdb"
+    auth:
+      accessKey: "9sDY9Qog7WQGMLrzqXIT"
+      secretKey: "KwvkghK4CiTmhfRm5vcMPxumUWIRuZmqS2ccJhYW"
   schedule: "*/1 * * * *"
-  storageClass: "s3"
-  s3Endpoint: "https://10.110.17.218:443"
-  s3AccessKey: Xm5g80QX3eZOgoa2spaK
-  s3SecretKey: PGNmy6mXm8dyBcrDYD6xwXkrvcEaeP2gCtCVt7OQ
   maxBackupCount: 2
-  s3BucketName: test
