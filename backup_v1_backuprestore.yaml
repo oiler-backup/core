@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: backuprestore-sample
 spec:
-  dbUri: "mysql.default.svc.cluster.local"
+  dbUri: "10.100.159.91"
   databasePort: 3306
   databaseUser: "testuser"
   databasePass: "testpassword"

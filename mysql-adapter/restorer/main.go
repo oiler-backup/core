@@ -28,7 +28,7 @@ var (
 
 func main() {
 	// Загрузка переменных окружения
-	ctx := context.Background()
+	ctx = context.Background()
 
 	// Zap logger configuration
 	var err error
@@ -43,12 +43,13 @@ func main() {
 		panic(fmt.Sprintf("Failed to configurate: %v", err))
 	}
 
+	metricsReporter = metricsbase.NewMetricsReporter(cfg.CoreAddr, false)
+
 	restorer := restorer.NewRestorer(cfg.DbHost, cfg.DbPort, cfg.DbUser, cfg.DbPassword, cfg.DbName, BACKUP_PATH)
 	downloader, err := s3base.NewS3Downloader(ctx, cfg.S3Endpoint, cfg.S3AccessKey, cfg.S3SecretKey, S3REGION, cfg.Secure)
 	if err != nil {
 		mustProccessErrors("Failed to create downloader", err)
 	}
-	metricsReporter = metricsbase.NewMetricsReporter(cfg.CoreAddr, false)
 
 	err = downloader.Download(ctx, cfg.S3BucketName, cfg.BackupRevision, BACKUP_PATH)
 	if err != nil {

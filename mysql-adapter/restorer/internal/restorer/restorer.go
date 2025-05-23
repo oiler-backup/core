@@ -44,14 +44,15 @@ func (r Restorer) Restore(ctx context.Context) error {
 		return fmt.Errorf("failed to connect to database: %v", err)
 	}
 
-	cmd := exec.Command("mysql",
-		"-h", r.dbHost,
-		"-P", r.dbPort,
-		"-u", r.dbUser,
-		fmt.Sprintf("-p%s", r.dbPass),
+	connStr = fmt.Sprintf("mysql -h %s -P %s -u %s -p%s %s < %s",
+		r.dbHost,
+		r.dbPort,
+		r.dbUser,
+		r.dbPass,
 		r.dbName,
-		"<", r.backupPath,
+		r.backupPath,
 	)
+	cmd := exec.Command("bash", "-c", connStr)
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
