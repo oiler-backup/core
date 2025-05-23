@@ -1,12 +1,12 @@
 sheduler:
   serviceAccountName: mongo-scheduler-sa
-  image: "ashadrinnn/mongoad:0.0.1-0"
+  image: "sveb00/mongoad:0.0.1-0"
   imagePullPolicy: Always
   name: mongo-scheduler
   namespace: oiler-backup-system
   port: 50051
   replicas: 1
 backuper:
-  image: "ashadrinnn/mongobackuper:0.0.1-0"
+  image: "sveb00/mongobackuper:0.0.1-0"
 restorer:
   image: "sveb00/mongorestorer:0.0.1-1"

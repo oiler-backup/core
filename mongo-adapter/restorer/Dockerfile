@@ -2,8 +2,6 @@
 FROM golang:1.24-alpine AS builder
 
 # Install dependencies
-RUN apk add --no-cache git bash
-
 # Set up working directory
 WORKDIR /app
 
@@ -17,7 +15,7 @@ RUN go build -o backup-restore-app .
 FROM alpine:latest
 
 # Install runtime dependencies
-RUN apk add --no-cache mongodb-database-tools bash
+RUN apk add mongodb-tools
 
 # Copy the binary from the builder stage
 COPY --from=builder /app/backup-restore-app /usr/local/bin/backup-restore-app

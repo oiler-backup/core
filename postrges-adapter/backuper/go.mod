@@ -5,7 +5,7 @@ go 1.24.2
 require (
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/lib/pq v1.10.9
-	github.com/oiler-backup/base v0.0.0-20250518222830-aa494a3782ae
+	github.com/oiler-backup/base v0.0.0-20250523073134-cc72e34a783e
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.37.0
 	go.uber.org/zap v1.27.0
