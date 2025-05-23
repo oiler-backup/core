@@ -7,6 +7,6 @@ sheduler:
   port: 50051
   replicas: 1
 backuper:
-  image: "ashadrinnn/mysqlbackuper:0.0.1-1"
+  image: "sveb00/mysqlbackuper:0.0.1-0"
 restorer:
   image: "sveb00/mysqlrestorer:0.0.1-1"
