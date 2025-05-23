@@ -33,14 +33,13 @@ func (r Resotrer) Restore(ctx context.Context) error {
 		"--port", r.dbPort,
 		"--username", r.dbUser,
 		"--password", r.dbPass,
-		"-db", r.dbName,
-		"--drop",
-		r.backupPath,
+		"--db", r.dbName,
+		fmt.Sprint("--archive=", r.backupPath),
 	)
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed executing pg_dump: %+v\n.Output:%s", err, string(output))
+		return fmt.Errorf("failed executing mongorestore: %+v\n.Output:%s", err, string(output))
 	}
 	return nil
 }

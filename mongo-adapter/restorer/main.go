@@ -43,13 +43,13 @@ func main() {
 	}
 
 	restorer := restorer.NewRestorer(cfg.DbHost, cfg.DbPort, cfg.DbUser, cfg.DbPassword, cfg.DbName, BACKUP_PATH)
+	metricsReporter = metricsbase.NewMetricsReporter(cfg.CoreAddr, false)
 	downloader, err := s3base.NewS3Downloader(ctx, cfg.S3Endpoint, cfg.S3AccessKey, cfg.S3SecretKey, S3REGION, cfg.Secure)
 	if err != nil {
 		mustProccessErrors("Failed to create downloader", err)
 	}
-	metricsReporter = metricsbase.NewMetricsReporter(cfg.CoreAddr, false)
 
-	err = downloader.Download(ctx, cfg.S3BucketName, cfg.BackupRevision, BACKUP_PATH)
+	err = downloader.Download(ctx, cfg.S3BucketName, cfg.DbName, cfg.BackupRevision, BACKUP_PATH)
 	if err != nil {
 		mustProccessErrors("Failed to perform download", err)
 	}

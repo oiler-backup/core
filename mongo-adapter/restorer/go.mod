@@ -40,5 +40,5 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.19 // indirect
 	github.com/aws/smithy-go v1.22.3 // indirect
 	github.com/caarlos0/env/v11 v11.3.1
-	github.com/oiler-backup/base v0.0.0-20250521192127-215469f19f06
+	github.com/oiler-backup/base v0.0.0-20250523223223-14d6ab2fe7f5
 )
