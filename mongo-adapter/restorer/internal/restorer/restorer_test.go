@@ -2,10 +2,11 @@ package restorer
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
+
+	_ "backuper/internal/backuper"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,14 +16,17 @@ import (
 
 func Test_Redtore_UploadValidDump(t *testing.T) {
 	ctx := context.Background()
+	dbUser := "root"
+	dbPass := "pass"
+	dbName := "admin"
 
 	req := tc.ContainerRequest{
 		Image:           "mongo:8.0",
 		ExposedPorts:    []string{"27017/tcp"},
 		AlwaysPullImage: false,
 		Env: map[string]string{
-			"MONGO_INITDB_ROOT_USERNAME": "root",
-			"MONGO_INITDB_ROOT_PASSWORD": "pass",
+			"MONGO_INITDB_ROOT_USERNAME": dbUser,
+			"MONGO_INITDB_ROOT_PASSWORD": dbPass,
 		},
 		WaitingFor: wait.ForListeningPort("27017/tcp"),
 	}
@@ -39,17 +43,28 @@ func Test_Redtore_UploadValidDump(t *testing.T) {
 		}
 	}()
 
-	host, _ := mongoC.ContainerIP(ctx)
-
+	dbhost, _ := mongoC.ContainerIP(ctx)
+	dbPort, _ := mongoC.MappedPort(ctx, "27017")
 	tempDir := t.TempDir()
 	backupFile := filepath.Join(tempDir, "backup.dump")
 
+	b := NewBackuper(
+		dbhost,
+		dbPort.Port(),
+		dbUser,
+		dbPass,
+		dbName,
+		backupFile,
+	)
+
+	err = b.Backup(ctx, false)
+
 	r := NewRestorer(
-		host,
-		"27017",
-		"root",
-		"pass",
-		"admin",
+		dbhost,
+		dbPort.Port(),
+		dbUser,
+		dbPass,
+		dbName,
 		backupFile,
 	)
 
@@ -59,11 +74,4 @@ func Test_Redtore_UploadValidDump(t *testing.T) {
 	fileInfo, err := os.Stat(backupFile)
 	require.NoError(t, err)
 	assert.Greater(t, fileInfo.Size(), int64(0))
-}
-
-func Test_Restore_Backup(t *testing.T) {
-	message := "some message: %s"
-	option := "option"
-	err := fmt.Errorf(message, option)
-	assert.Equal(t, fmt.Sprintf(message, option), err.Error())
 }

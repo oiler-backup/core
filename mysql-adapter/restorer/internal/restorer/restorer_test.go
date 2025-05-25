@@ -2,7 +2,6 @@ package restorer
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -16,6 +15,9 @@ import (
 
 func Test_Redtore_UploadValidDump(t *testing.T) {
 	ctx := context.Background()
+	dbUser := "testuser"
+	dbPass := "testpassword"
+	dbName := "testdb"
 
 	req := tc.ContainerRequest{
 		Image:           "mysql:8.0",
@@ -30,28 +32,40 @@ func Test_Redtore_UploadValidDump(t *testing.T) {
 		WaitingFor: wait.ForListeningPort("3306/tcp"),
 	}
 
-	postgresC, err := tc.GenericContainer(ctx, tc.GenericContainerRequest{
+	mysqlC, err := tc.GenericContainer(ctx, tc.GenericContainerRequest{
 		ContainerRequest: req,
 		Started:          true,
 	})
 	require.NoError(t, err)
 	defer func() {
-		err := postgresC.Terminate(ctx)
+		err := mysqlC.Terminate(ctx)
 		if err != nil {
 			panic(err)
 		}
 	}()
-	host, _ := postgresC.ContainerIP(ctx)
 
+	dbhost, _ := mysqlC.ContainerIP(ctx)
+	dbPort, _ := mysqlC.MappedPort(ctx, "3306")
 	tempDir := t.TempDir()
 	backupFile := filepath.Join(tempDir, "backup.dump")
 
+	b := NewBackuper(
+		dbhost,
+		dbPort.Port(),
+		dbUser,
+		dbPass,
+		dbName,
+		backupFile,
+	)
+
+	err = b.Backup(ctx, false)
+
 	r := NewRestorer(
-		host,
-		"3306",
-		"testuser",
-		"testpassword",
-		"testdb",
+		dbhost,
+		dbPort.Port(),
+		dbUser,
+		dbPass,
+		dbName,
 		backupFile,
 	)
 
@@ -61,11 +75,4 @@ func Test_Redtore_UploadValidDump(t *testing.T) {
 	fileInfo, err := os.Stat(backupFile)
 	require.NoError(t, err)
 	assert.Greater(t, fileInfo.Size(), int64(0))
-}
-
-func Test_Restore_Backup(t *testing.T) {
-	message := "some message: %s"
-	option := "option"
-	err := fmt.Errorf(message, option)
-	assert.Equal(t, fmt.Sprintf(message, option), err.Error())
 }

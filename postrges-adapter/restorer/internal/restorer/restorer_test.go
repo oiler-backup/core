@@ -2,7 +2,6 @@ package restorer
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -15,6 +14,9 @@ import (
 
 func Test_Redtore_UploadValidDump(t *testing.T) {
 	ctx := context.Background()
+	dbUser := "testuser"
+	dbPass := "testpass"
+	dbName := "testdb"
 
 	req := tc.ContainerRequest{
 		Image:        "postgres:14",
@@ -38,18 +40,29 @@ func Test_Redtore_UploadValidDump(t *testing.T) {
 			panic(err)
 		}
 	}()
-	host, _ := postgresC.Host(ctx)
-	port, _ := postgresC.MappedPort(ctx, "5432")
 
+	dbhost, _ := postgresC.ContainerIP(ctx)
+	dbPort, _ := postgresC.MappedPort(ctx, "5432")
 	tempDir := t.TempDir()
 	backupFile := filepath.Join(tempDir, "backup.dump")
 
+	b := NewBackuper(
+		dbhost,
+		dbPort.Port(),
+		dbUser,
+		dbPass,
+		dbName,
+		backupFile,
+	)
+
+	err = b.Backup(ctx, false)
+
 	r := NewRestorer(
-		host,
-		port.Port(),
-		"testuser",
-		"testpass",
-		"testdb",
+		dbhost,
+		dbPort.Port(),
+		dbUser,
+		dbPass,
+		dbName,
 		backupFile,
 	)
 
@@ -59,11 +72,4 @@ func Test_Redtore_UploadValidDump(t *testing.T) {
 	fileInfo, err := os.Stat(backupFile)
 	require.NoError(t, err)
 	assert.Greater(t, fileInfo.Size(), int64(0))
-}
-
-func Test_Restore_Backup(t *testing.T) {
-	message := "some message: %s"
-	option := "option"
-	err := fmt.Errorf(message, option)
-	assert.Equal(t, fmt.Sprintf(message, option), err.Error())
 }
