@@ -40,7 +40,6 @@ func (r Resotrer) Restore(ctx context.Context) error {
 	)
 
 	output, err := cmd.CombinedOutput()
-	fmt.Println(string(output))
 	if err != nil {
 		return fmt.Errorf("failed executing mongorestore: %+v\n.Output:%s", err, string(output))
 	}
