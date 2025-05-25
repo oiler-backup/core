@@ -1,3 +1,4 @@
+// Package restorer contains entities to restore backup of Postgres Database.
 package restorer
 
 import (
@@ -20,6 +21,8 @@ type Restorer struct {
 	backupPath string
 }
 
+// NewRestorer is a constructor for Restorer.
+// Accepts parameters to connect to database and backupPath where backup will be stored locally.
 func NewRestorer(dbHost, dbPort, dbUser, dbPassword, dbName, backupPath string) Restorer {
 	return Restorer{
 		dbHost:     dbHost,
@@ -31,6 +34,8 @@ func NewRestorer(dbHost, dbPort, dbUser, dbPassword, dbName, backupPath string) 
 	}
 }
 
+// Restore restores backup from local file.
+// It uses postgres command with appropriate flags.
 func (r Restorer) Restore(ctx context.Context) error {
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		r.dbHost, r.dbPort, r.dbUser, r.dbPass, r.dbName)

@@ -1,3 +1,4 @@
+// Package restorer contains entities to restore backup of MySQL Database.
 package restorer
 
 import (
@@ -19,6 +20,8 @@ type Restorer struct {
 	backupPath string
 }
 
+// NewRestorer is a constructor for Restorer.
+// Accepts parameters to connect to database and backupPath where backup will be stored locally.
 func NewRestorer(dbHost, dbPort, dbUser, dbPassword, dbName, backupPath string) Restorer {
 	return Restorer{
 		dbHost:     dbHost,
@@ -30,6 +33,8 @@ func NewRestorer(dbHost, dbPort, dbUser, dbPassword, dbName, backupPath string) 
 	}
 }
 
+// Restore restores backup from local file.
+// It uses mysql command with appropriate flags.
 func (r Restorer) Restore(ctx context.Context) error {
 	connStr := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", r.dbUser, r.dbPass, r.dbHost, r.dbPort, r.dbName)
 
