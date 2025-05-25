@@ -47,6 +47,7 @@ func (b Backuper) Backup(ctx context.Context, secure bool) error {
 		"--port", b.dbPort,
 		"--username", b.dbUser,
 		"--password", b.dbPass,
+		"--gzip",
 		"--db", b.dbName,
 		"--authenticationDatabase", "admin",
 		fmt.Sprint("--archive=", b.backupPath),

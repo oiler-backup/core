@@ -33,7 +33,9 @@ func (r Resotrer) Restore(ctx context.Context) error {
 		"--port", r.dbPort,
 		"--username", r.dbUser,
 		"--password", r.dbPass,
-		"--db", r.dbName,
+		"--gzip",
+		"--drop",
+		fmt.Sprintf("--nsInclude=%s.*", r.dbName),
 		fmt.Sprint("--archive=", r.backupPath),
 	)
 

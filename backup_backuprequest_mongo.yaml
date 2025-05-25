@@ -7,14 +7,14 @@ metadata:
   name: backuprequest-sample
 spec:
   dbSpec:
-    uri: "10.107.243.182"
+    uri: "mongodb-service.default.svc.cluster.local"
     port: 27017
     user: "root"
     pass: "root"
     dbName: "admin"
     dbType: "mongodb"
   s3Spec:
-    endpoint: "https://10.109.69.152:443"
+    endpoint: "https://minio.minio-tenant.svc.cluster.local"
     bucketName: "testdb"
     auth:
       accessKey: "9sDY9Qog7WQGMLrzqXIT"
