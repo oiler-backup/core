@@ -49,7 +49,7 @@ func main() {
 		mustProccessErrors("Failed to create downloader", err)
 	}
 
-	backupFile, err := os.OpenFile(BACKUP_PATH, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0777)
+	backupFile, err := os.OpenFile(BACKUP_PATH, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		mustProccessErrors("Failed to open backupFile: %+v", err)
 	}
