@@ -1,3 +1,4 @@
+// Package config stores configuration for restorer.
 package config
 
 import (
@@ -34,6 +35,7 @@ func GetConfig() (Config, error) {
 	return cfg, nil
 }
 
+// String return config values as string.
 func (c Config) String() string {
 	return fmt.Sprintf("{DbHost: %s, DbPort: %s, DbUser: %s, DbPassword: <unset>, DbName: %s, "+
 		"CoreAddr: %s, S3Endpoint: %s, S3AccessKey: <unset>, S3SecretKey: <unset>, S3BucketName: %s, "+

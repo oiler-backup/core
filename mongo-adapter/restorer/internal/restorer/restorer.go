@@ -1,3 +1,4 @@
+// Package restorer contains entities to restore backup of Mongo Database.
 package restorer
 
 import (
@@ -6,7 +7,8 @@ import (
 	"os/exec"
 )
 
-type Resotrer struct {
+// A Restorer restore backup of Mongo Database.
+type Restorer struct {
 	dbHost string
 	dbPort string
 	dbUser string
@@ -16,8 +18,10 @@ type Resotrer struct {
 	backupPath string
 }
 
-func NewRestorer(dbHost, dbPort, dbUser, dbPassword, dbName, backupPath string) Resotrer {
-	return Resotrer{
+// NewRestorer is a constructor for Restorer.
+// Accepts parameters to connect to database and backupPath where backup will be stored locally.
+func NewRestorer(dbHost, dbPort, dbUser, dbPassword, dbName, backupPath string) Restorer {
+	return Restorer{
 		dbHost:     dbHost,
 		dbPort:     dbPort,
 		dbUser:     dbUser,
@@ -27,7 +31,9 @@ func NewRestorer(dbHost, dbPort, dbUser, dbPassword, dbName, backupPath string) 
 	}
 }
 
-func (r Resotrer) Restore(ctx context.Context) error {
+// Restore restores backup from local file.
+// It uses mongorestore command with appropriate flags.
+func (r Restorer) Restore(ctx context.Context) error {
 	cmd := exec.Command("mongorestore",
 		"--host", r.dbHost,
 		"--port", r.dbPort,
