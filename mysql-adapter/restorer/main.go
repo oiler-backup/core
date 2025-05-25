@@ -51,7 +51,11 @@ func main() {
 		mustProccessErrors("Failed to create downloader", err)
 	}
 
-	err = downloader.Download(ctx, cfg.S3BucketName, cfg.BackupRevision, BACKUP_PATH)
+	backupFile, err := os.OpenFile(BACKUP_PATH, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0777)
+	if err != nil {
+		mustProccessErrors("Failed to open backupFile: %+v", err)
+	}
+	err = downloader.Download(ctx, cfg.S3BucketName, cfg.DbName, cfg.BackupRevision, backupFile)
 	if err != nil {
 		mustProccessErrors("Failed to perform download", err)
 	}
