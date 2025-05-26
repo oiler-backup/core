@@ -20,25 +20,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-// NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
-
 // BackupRestoreSpec defines the desired state of BackupRestore.
 type BackupRestoreSpec struct {
-	DatabaseURI  string `json:"dbUri"`
-	DatabasePort int    `json:"databasePort"`
-	DatabaseUser string `json:"databaseUser"`
-	DatabasePass string `json:"databasePass"`
-	DatabaseName string `json:"databaseName"`
-	DatabaseType string `json:"databaseType"`
+	DbSpec DatabaseSpec `json:"dbSpec"`
+	S3Spec S3Spec       `json:"s3Spec"`
 
-	S3Endpoint     string `json:"s3Endpoint"`
-	S3AccessKey    string `json:"s3AccessKey"`
-	S3SecretKey    string `json:"s3SecretKey"`
-	S3BucketName   string `json:"s3BucketName"`
-	BackupRevision string `json:"backupRevision"` // переделать на int
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	BackupRevision string `json:"backupRevision"`
 }
 
 // BackupRestoreStatus defines the observed state of BackupRestore.

@@ -41,38 +41,53 @@ spec:
             properties:
               backupRevision:
                 type: string
-              databaseName:
-                type: string
-              databasePass:
-                type: string
-              databasePort:
-                type: integer
-              databaseType:
-                type: string
-              databaseUser:
-                type: string
-              dbUri:
-                type: string
-              s3AccessKey:
-                type: string
-              s3BucketName:
-                type: string
-              s3Endpoint:
-                type: string
-              s3SecretKey:
-                type: string
+              dbSpec:
+                properties:
+                  dbName:
+                    type: string
+                  dbType:
+                    type: string
+                  pass:
+                    type: string
+                  port:
+                    type: integer
+                  uri:
+                    type: string
+                  user:
+                    type: string
+                required:
+                - dbName
+                - dbType
+                - pass
+                - port
+                - uri
+                - user
+                type: object
+              s3Spec:
+                properties:
+                  auth:
+                    properties:
+                      accessKey:
+                        type: string
+                      secretKey:
+                        type: string
+                    required:
+                    - accessKey
+                    - secretKey
+                    type: object
+                  bucketName:
+                    type: string
+                  endpoint:
+                    type: string
+                required:
+                - auth
+                - bucketName
+                - endpoint
+                type: object
             required:
             - backupRevision
-            - databaseName
-            - databasePass
-            - databasePort
-            - databaseType
-            - databaseUser
-            - dbUri
-            - s3AccessKey
-            - s3BucketName
-            - s3Endpoint
-            - s3SecretKey
+            - dbSpec
+            - s3Spec
             type: object
           status:
             description: BackupRestoreStatus defines the observed state of BackupRestore.
