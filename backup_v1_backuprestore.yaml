@@ -6,16 +6,17 @@ metadata:
     app.kubernetes.io/managed-by: kustomize
   name: backuprestore-sample
 spec:
-  dbUri: "mongodb-service.default.svc.cluster.local"
-  databasePort: 27017
-  databaseUser: "root"
-  databasePass: "root"
-  databaseName: "admin"
-  databaseType: "mongodb"
-  s3Endpoint: "https://minio.minio-tenant.svc.cluster.local"
-  s3AccessKey: "9sDY9Qog7WQGMLrzqXIT"
-  s3SecretKey: "KwvkghK4CiTmhfRm5vcMPxumUWIRuZmqS2ccJhYW"
-  # s3AccessKey: minio
-  # s3SecretKey: minio123
-  s3BucketName: testdb
+  dbSpec:
+    uri: "mongodb-service.default.svc.cluster.local"
+    port: 27017
+    user: "root"
+    pass: "root"
+    dbName: "admin"
+    dbType: "mongodb"
+  s3Spec:
+    endpoint: "https://minio.minio-tenant.svc.cluster.local"
+    bucketName: "testdb"
+    auth:
+      accessKey: "9sDY9Qog7WQGMLrzqXIT"
+      secretKey: "KwvkghK4CiTmhfRm5vcMPxumUWIRuZmqS2ccJhYW"
   backupRevision: "0"

@@ -77,10 +77,10 @@ func (r *BackupRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
-	controllerAddress, exists := dbControllers[backupRestore.Spec.DatabaseType]
+	controllerAddress, exists := dbControllers[backupRestore.Spec.DbSpec.DbType]
 	if !exists {
-		err := ErrNotSupported(backupRestore.Spec.DatabaseType)
-		log.Error(err, "Make sure to update database-config cm")
+		err := ErrNotSupported(backupRestore.Spec.DbSpec.DbType)
+		log.Error(err, "Make sure to update database-config cm ", backupRestore.Spec.DbSpec.DbType)
 		return ctrl.Result{}, err
 	}
 
@@ -162,16 +162,16 @@ func (r *BackupRestoreReconciler) delegateToController(ctx context.Context, cont
 	client := pb.NewBackupServiceClient(conn)
 
 	req := &pb.BackupRestore{
-		DbUri:          backupRestore.Spec.DatabaseURI,
-		DbPort:         int64(backupRestore.Spec.DatabasePort),
-		DbUser:         backupRestore.Spec.DatabaseUser,
-		DbPass:         backupRestore.Spec.DatabasePass,
-		DbName:         backupRestore.Spec.DatabaseName,
-		DatabaseType:   backupRestore.Spec.DatabaseType,
-		S3Endpoint:     backupRestore.Spec.S3Endpoint,
-		S3AccessKey:    backupRestore.Spec.S3AccessKey,
-		S3SecretKey:    backupRestore.Spec.S3SecretKey,
-		S3BucketName:   backupRestore.Spec.S3BucketName,
+		DbUri:          backupRestore.Spec.DbSpec.URI,
+		DbPort:         int64(backupRestore.Spec.DbSpec.Port),
+		DbUser:         backupRestore.Spec.DbSpec.User,
+		DbPass:         backupRestore.Spec.DbSpec.Pass,
+		DbName:         backupRestore.Spec.DbSpec.DbName,
+		DatabaseType:   backupRestore.Spec.DbSpec.DbType,
+		S3Endpoint:     backupRestore.Spec.S3Spec.Endpoint,
+		S3AccessKey:    backupRestore.Spec.S3Spec.Auth.AccessKey,
+		S3SecretKey:    backupRestore.Spec.S3Spec.Auth.SecretKey,
+		S3BucketName:   backupRestore.Spec.S3Spec.BucketName,
 		BackupRevision: backupRestore.Spec.BackupRevision,
 		CoreAddr:       os.Getenv("CORE_ADDR"),
 	}
