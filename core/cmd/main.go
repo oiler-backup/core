@@ -81,6 +81,33 @@ var (
 	)
 )
 
+var (
+	successfulRestores = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "backup_restores_successful_total",
+			Help: "Total number of successful restores",
+		},
+		[]string{"restore_name"},
+	)
+
+	failedRestores = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "backup_restores_failed_total",
+			Help: "Total number of failed restores",
+		},
+		[]string{"restore_name"},
+	)
+
+	restoresDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "restore_duration_seconds",
+			Help:    "Duration of backuprestore operations in seconds",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"restore_name"},
+	)
+)
+
 // Server implements the BackupService gRPC service
 type server struct {
 	pb.UnimplementedBackupMetricsServiceServer
@@ -99,6 +126,22 @@ func (s *server) ReportSuccessfulBackup(ctx context.Context, req *pb.BackupMetri
 
 	duration := float64(req.TimeElapsed) / 1000.0
 	backupsDuration.With(labels).Observe(duration)
+
+	return &emptypb.Empty{}, nil
+}
+
+func (s *server) ReportRestoreStatus(ctx context.Context, req *pb.RestoreMetrics) (*emptypb.Empty, error) {
+	log.Printf("Received restore report: %s took %d", req.RestoreName, req.TimeElapsed)
+
+	labels := prometheus.Labels{"restore_name": req.RestoreName}
+	if req.Success {
+		successfulRestores.With(labels).Inc()
+	} else {
+		failedRestores.With(labels).Inc()
+	}
+
+	duration := float64(req.TimeElapsed) / 1000.0
+	restoresDuration.With(labels).Observe(duration)
 
 	return &emptypb.Empty{}, nil
 }
@@ -125,6 +168,9 @@ func init() {
 	metrics.Registry.MustRegister(successfulBackups)
 	metrics.Registry.MustRegister(failedBackups)
 	metrics.Registry.MustRegister(backupsDuration)
+	metrics.Registry.MustRegister(restoresDuration)
+	metrics.Registry.MustRegister(successfulRestores)
+	metrics.Registry.MustRegister(failedRestores)
 
 }
 
