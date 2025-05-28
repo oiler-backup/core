@@ -16,6 +16,11 @@ jobs:
         with:
           go-version-file: './core/go.mod'
 
+      - name: Install Dependencies
+        working-directory: ./core
+        run: |
+          go mod tidy
+
       - name: Run linter
         uses: golangci/golangci-lint-action@v6
         with:
