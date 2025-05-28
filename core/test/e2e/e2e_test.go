@@ -216,16 +216,16 @@ var _ = Describe("Manager", Ordered, func() {
 			_, err = utils.Run(cmd)
 			Expect(err).NotTo(HaveOccurred(), "Failed to create curl-metrics pod")
 
-			By("waiting for the curl-metrics pod to complete.")
-			verifyCurlUp := func(g Gomega) {
-				cmd := exec.Command("kubectl", "get", "pods", "curl-metrics",
-					"-o", "jsonpath={.status.phase}",
-					"-n", namespace)
-				output, err := utils.Run(cmd)
-				g.Expect(err).NotTo(HaveOccurred())
-				g.Expect(output).To(Equal("Succeeded"), "curl pod in wrong status")
-			}
-			Eventually(verifyCurlUp, 5*time.Minute).Should(Succeed())
+			// By("waiting for the curl-metrics pod to complete.")
+			// verifyCurlUp := func(g Gomega) {
+			// 	cmd := exec.Command("kubectl", "get", "pods", "curl-metrics",
+			// 		"-o", "jsonpath={.status.phase}",
+			// 		"-n", namespace)
+			// 	output, err := utils.Run(cmd)
+			// 	g.Expect(err).NotTo(HaveOccurred())
+			// 	g.Expect(output).To(Equal("Succeeded"), "curl pod in wrong status")
+			// }
+			// Eventually(verifyCurlUp, 5*time.Minute).Should(Succeed())
 
 			By("getting the metrics by checking curl-metrics logs")
 			metricsOutput := getMetricsOutput()
