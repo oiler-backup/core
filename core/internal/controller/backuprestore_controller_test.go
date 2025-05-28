@@ -21,7 +21,9 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"k8s.io/apimachinery/pkg/api/errors"
+	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -31,54 +33,132 @@ import (
 )
 
 var _ = Describe("BackupRestore Controller", func() {
-	Context("When reconciling a resource", func() {
-		const resourceName = "test-resource"
+	var (
+		ctx        context.Context
+		reconciler *BackupRestoreReconciler
+		scheme     *runtime.Scheme
+	)
 
-		ctx := context.Background()
+	BeforeEach(func() {
+		ctx = context.Background()
+		scheme = runtime.NewScheme()
+		_ = backupv1.AddToScheme(scheme)
 
-		typeNamespacedName := types.NamespacedName{
-			Name:      resourceName,
-			Namespace: "default", // TODO(user):Modify as needed
+		reconciler = &BackupRestoreReconciler{
+			Client: k8sClient,
+			Scheme: scheme,
 		}
-		backuprestore := &backupv1.BackupRestore{}
+		appCfg.OperatorNamespace = "oiler-backup-system"
+	})
+
+	Context("When reconciling a BackupRestore", func() {
+		const resourceName = "test-backuprestore"
+		nsName := types.NamespacedName{
+			Name:      resourceName,
+			Namespace: "default",
+		}
 
 		BeforeEach(func() {
-			By("creating the custom resource for the Kind BackupRestore")
-			err := k8sClient.Get(ctx, typeNamespacedName, backuprestore)
-			if err != nil && errors.IsNotFound(err) {
-				resource := &backupv1.BackupRestore{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      resourceName,
-						Namespace: "default",
-					},
-					// TODO(user): Specify other spec details if needed.
-				}
-				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+			ns := &corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "oiler-backup-system",
+				},
 			}
+			if err := k8sClient.Get(ctx, types.NamespacedName{
+				Namespace: ns.Namespace,
+				Name:      ns.Name,
+			}, &corev1.Namespace{}); apierrors.IsNotFound(err) {
+				Expect(k8sClient.Create(ctx, ns)).To(Succeed())
+			}
+			cm := &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "database-config",
+					Namespace: "oiler-backup-system",
+				},
+				Data: map[string]string{
+					"postgres": "adadpter.addr",
+				},
+			}
+			if err := k8sClient.Get(ctx, types.NamespacedName{
+				Namespace: cm.Namespace,
+				Name:      cm.Name,
+			}, &corev1.ConfigMap{}); apierrors.IsNotFound(err) {
+				Expect(k8sClient.Create(ctx, cm)).To(Succeed())
+			}
+			br := &backupv1.BackupRestore{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      resourceName,
+					Namespace: "default",
+				},
+				Spec: backupv1.BackupRestoreSpec{
+					DbSpec: backupv1.DatabaseSpec{
+						URI:    "localhost",
+						Port:   5432,
+						User:   "user",
+						Pass:   "pass",
+						DbName: "db",
+						DbType: "postgres",
+					},
+					S3Spec: backupv1.S3Spec{
+						Endpoint: "s3.example.com",
+						Auth: backupv1.S3Auth{
+							AccessKey: "key",
+							SecretKey: "secret",
+						},
+						BucketName: "bucket",
+					},
+					BackupRevision: "1",
+				},
+			}
+			Expect(k8sClient.Create(ctx, br)).To(Succeed())
 		})
 
 		AfterEach(func() {
-			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &backupv1.BackupRestore{}
-			err := k8sClient.Get(ctx, typeNamespacedName, resource)
-			Expect(err).NotTo(HaveOccurred())
-
-			By("Cleanup the specific resource instance BackupRestore")
-			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
+			br := &backupv1.BackupRestore{}
+			if err := k8sClient.Get(ctx, nsName, br); err == nil {
+				Expect(k8sClient.Delete(ctx, br)).To(Succeed())
+			}
 		})
-		It("should successfully reconcile the resource", func() {
-			By("Reconciling the created resource")
-			controllerReconciler := &BackupRestoreReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
+
+		It("should fail if database type is unsupported", func() {
+			br := &backupv1.BackupRestore{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "unsupported-db",
+					Namespace: "default",
+				},
+				Spec: backupv1.BackupRestoreSpec{
+					DbSpec: backupv1.DatabaseSpec{
+						DbType: "unknown",
+					},
+				},
+			}
+			Expect(k8sClient.Create(ctx, br)).To(Succeed())
+
+			req := reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Name:      "unsupported-db",
+					Namespace: "default",
+				},
 			}
 
-			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
-				NamespacedName: typeNamespacedName,
-			})
-			Expect(err).NotTo(HaveOccurred())
-			// TODO(user): Add more specific assertions depending on your controller's reconciliation logic.
-			// Example: If you expect a certain status condition after reconciliation, verify it here.
+			_, err := reconciler.Reconcile(ctx, req)
+			Expect(err).To(HaveOccurred())
+			Expect(err.Error()).To(ContainSubstring("database unknown is not supported"))
+
+			err = k8sClient.Get(ctx, req.NamespacedName, br)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(br.Status.Status).To(Equal(FAILURE))
+		})
+
+		It("should handle failed grpc call", func() {
+			req := reconcile.Request{NamespacedName: nsName}
+
+			_, err := reconciler.Reconcile(ctx, req)
+			Expect(err).To(HaveOccurred())
+
+			br := &backupv1.BackupRestore{}
+			Expect(k8sClient.Get(ctx, nsName, br)).To(Succeed())
+			Expect(br.Status.Status).To(Equal(FAILURE))
 		})
 	})
 })

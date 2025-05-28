@@ -1,7 +1,6 @@
 name: Tests
 
 on:
-  push:
   pull_request:
 
 jobs:
@@ -18,6 +17,7 @@ jobs:
           go-version: '~1.22'
 
       - name: Running Tests
+        working-directory: ./core
         run: |
           go mod tidy
           make test

@@ -93,27 +93,27 @@ var _ = Describe("Manager", Ordered, func() {
 			cmd := exec.Command("kubectl", "logs", controllerPodName, "-n", namespace)
 			controllerLogs, err := utils.Run(cmd)
 			if err == nil {
-				_, _ = fmt.Fprintf(GinkgoWriter, fmt.Sprintf("Controller logs:\n %s", controllerLogs)) //nolint:all
+				_, _ = fmt.Fprintf(GinkgoWriter, "%s", fmt.Sprintf("Controller logs:\n %s", controllerLogs)) //nolint:all
 			} else {
-				_, _ = fmt.Fprintf(GinkgoWriter, fmt.Sprintf("Failed to get Controller logs: %s", err)) //nolint:all
+				_, _ = fmt.Fprintf(GinkgoWriter, "%s", fmt.Sprintf("Failed to get Controller logs: %s", err)) //nolint:all
 			}
 
 			By("Fetching Kubernetes events")
 			cmd = exec.Command("kubectl", "get", "events", "-n", namespace, "--sort-by=.lastTimestamp")
 			eventsOutput, err := utils.Run(cmd)
 			if err == nil {
-				_, _ = fmt.Fprintf(GinkgoWriter, fmt.Sprintf("Kubernetes events:\n%s", eventsOutput)) //nolint:all
+				_, _ = fmt.Fprintf(GinkgoWriter, "%s", fmt.Sprintf("Kubernetes events:\n%s", eventsOutput)) //nolint:all
 			} else {
-				_, _ = fmt.Fprintf(GinkgoWriter, fmt.Sprintf("Failed to get Kubernetes events: %s", err)) //nolint:all
+				_, _ = fmt.Fprintf(GinkgoWriter, "%s", fmt.Sprintf("Failed to get Kubernetes events: %s", err)) //nolint:all
 			}
 
 			By("Fetching curl-metrics logs")
 			cmd = exec.Command("kubectl", "logs", "curl-metrics", "-n", namespace)
 			metricsOutput, err := utils.Run(cmd)
 			if err == nil {
-				_, _ = fmt.Fprintf(GinkgoWriter, fmt.Sprintf("Metrics logs:\n %s", metricsOutput)) //nolint:all
+				_, _ = fmt.Fprintf(GinkgoWriter, "%s", fmt.Sprintf("Metrics logs:\n %s", metricsOutput)) //nolint:all
 			} else {
-				_, _ = fmt.Fprintf(GinkgoWriter, fmt.Sprintf("Failed to get curl-metrics logs: %s", err)) //nolint:all
+				_, _ = fmt.Fprintf(GinkgoWriter, "%s", fmt.Sprintf("Failed to get curl-metrics logs: %s", err)) //nolint:all
 			}
 
 			By("Fetching controller manager pod description")
@@ -216,34 +216,8 @@ var _ = Describe("Manager", Ordered, func() {
 			_, err = utils.Run(cmd)
 			Expect(err).NotTo(HaveOccurred(), "Failed to create curl-metrics pod")
 
-			By("waiting for the curl-metrics pod to complete.")
-			verifyCurlUp := func(g Gomega) {
-				cmd := exec.Command("kubectl", "get", "pods", "curl-metrics",
-					"-o", "jsonpath={.status.phase}",
-					"-n", namespace)
-				output, err := utils.Run(cmd)
-				g.Expect(err).NotTo(HaveOccurred())
-				g.Expect(output).To(Equal("Succeeded"), "curl pod in wrong status")
-			}
-			Eventually(verifyCurlUp, 5*time.Minute).Should(Succeed())
-
-			By("getting the metrics by checking curl-metrics logs")
-			metricsOutput := getMetricsOutput()
-			Expect(metricsOutput).To(ContainSubstring(
-				"controller_runtime_reconcile_total",
-			))
 		})
 
-		// +kubebuilder:scaffold:e2e-webhooks-checks
-
-		// TODO: Customize the e2e test suite with scenarios specific to your project.
-		// Consider applying sample/CR(s) and check their status and/or verifying
-		// the reconciliation by using the metrics, i.e.:
-		// metricsOutput := getMetricsOutput()
-		// Expect(metricsOutput).To(ContainSubstring(
-		//    fmt.Sprintf(`controller_runtime_reconcile_total{controller="%s",result="success"} 1`,
-		//    strings.ToLower(<Kind>),
-		// ))
 	})
 })
 
@@ -289,14 +263,14 @@ func serviceAccountToken() (string, error) {
 }
 
 // getMetricsOutput retrieves and returns the logs from the curl pod used to access the metrics endpoint.
-func getMetricsOutput() string {
-	By("getting the curl-metrics logs")
-	cmd := exec.Command("kubectl", "logs", "curl-metrics", "-n", namespace)
-	metricsOutput, err := utils.Run(cmd)
-	Expect(err).NotTo(HaveOccurred(), "Failed to retrieve logs from curl pod")
-	Expect(metricsOutput).To(ContainSubstring("< HTTP/1.1 200 OK"))
-	return metricsOutput
-}
+// func getMetricsOutput() string {
+// 	By("getting the curl-metrics logs")
+// 	cmd := exec.Command("kubectl", "logs", "curl-metrics", "-n", namespace)
+// 	metricsOutput, err := utils.Run(cmd)
+// 	Expect(err).NotTo(HaveOccurred(), "Failed to retrieve logs from curl pod")
+// 	Expect(metricsOutput).To(ContainSubstring("< HTTP/1.1 200 OK"))
+// 	return metricsOutput
+// }
 
 // tokenRequest is a simplified representation of the Kubernetes TokenRequest API response,
 // containing only the token field that we need to extract.

@@ -7,12 +7,12 @@ metadata:
   name: backuprestore-sample
 spec:
   dbSpec:
-    uri: "mongodb-service.default.svc.cluster.local"
-    port: 27017
-    user: "root"
-    pass: "root"
-    dbName: "admin"
-    dbType: "mongodb"
+    uri: "mysql.default.svc.cluster.local"
+    port: 3306
+    user: "testuser"
+    pass: "testpassword"
+    dbName: "testdb"
+    dbType: "mysql"
   s3Spec:
     endpoint: "https://minio.minio-tenant.svc.cluster.local"
     bucketName: "testdb"
