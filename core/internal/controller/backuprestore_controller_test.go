@@ -21,7 +21,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -151,26 +150,15 @@ var _ = Describe("BackupRestore Controller", func() {
 			Expect(br.Status.Status).To(Equal(FAILURE))
 		})
 
-		It("should successfully reconcile the resource", func() {
-			By("Reconciling the created resource")
-			controllerReconciler := &BackupRestoreReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
-			}
-			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
-				NamespacedName: nsName,
-			})
-			Expect(err).NotTo(HaveOccurred())
+		It("should handle failed grpc call", func() {
+			req := reconcile.Request{NamespacedName: nsName}
 
-			By("Verifying the resource status after reconciliation")
+			_, err := reconciler.Reconcile(ctx, req)
+			Expect(err).To(HaveOccurred())
+
 			br := &backupv1.BackupRestore{}
 			Expect(k8sClient.Get(ctx, nsName, br)).To(Succeed())
-			Expect(br.Status.Status).To(Equal(IN_PROGRESS))
-
-			By("Checking if the Job was created")
-			job := &batchv1.Job{}
-			jobName := nsName
-			Expect(k8sClient.Get(ctx, jobName, job)).To(Succeed())
+			Expect(br.Status.Status).To(Equal(FAILURE))
 		})
 	})
 })

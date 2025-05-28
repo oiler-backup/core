@@ -67,6 +67,15 @@ func (r *BackupRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	dbControllers, err := loadDatabaseConfig(ctx, r, appCfg.OperatorNamespace)
 	if err != nil {
 		log.Error(err, "Failed to load config")
+		r.mustSetFailed(ctx, req.NamespacedName)
+		return ctrl.Result{}, err
+	}
+
+	controllerAddress, exists := dbControllers[backupRestore.Spec.DbSpec.DbType]
+	if !exists {
+		err := ErrNotSupported(backupRestore.Spec.DbSpec.DbType)
+		log.Error(err, "Make sure to update database-config cm ", "dbType", backupRestore.Spec.DbSpec.DbType)
+		r.mustSetFailed(ctx, req.NamespacedName)
 		return ctrl.Result{}, err
 	}
 
@@ -77,13 +86,6 @@ func (r *BackupRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
-	controllerAddress, exists := dbControllers[backupRestore.Spec.DbSpec.DbType]
-	if !exists {
-		err := ErrNotSupported(backupRestore.Spec.DbSpec.DbType)
-		log.Error(err, "Make sure to update database-config cm ", backupRestore.Spec.DbSpec.DbType)
-		return ctrl.Result{}, err
-	}
-
 	job, err := r.delegateToController(ctx, controllerAddress, &backupRestore)
 	if errors.Is(err, ErrAlreadyExists) {
 		log.Info("Job for BackupRestore %s already exists", "name", backupRestore.Name)
@@ -91,6 +93,7 @@ func (r *BackupRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, nil
 	} else if err != nil {
 		log.Error(err, "Cannot delegate to controller")
+		r.mustSetFailed(ctx, req.NamespacedName)
 		return ctrl.Result{}, err
 	}
 
