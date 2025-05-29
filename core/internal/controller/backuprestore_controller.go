@@ -85,7 +85,7 @@ func (r *BackupRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		r.mustSetFailed(ctx, req.NamespacedName)
 		return ctrl.Result{}, err
 	}
-
+	// Delegate the backup operation to the appropriate controller
 	job, err := r.delegateToController(ctx, controllerAddress, &backupRestore)
 	if errors.Is(err, ErrAlreadyExists) {
 		log.Info("Job for BackupRestore %s already exists", "name", backupRestore.Name)
@@ -97,6 +97,7 @@ func (r *BackupRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
+	// If the job does not exist, set the owner reference and update the job
 	if !jExists {
 		job.OwnerReferences = append(job.OwnerReferences, metav1.OwnerReference{
 			APIVersion:         backupRestore.APIVersion,
@@ -113,6 +114,7 @@ func (r *BackupRestoreReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 	}
 
+	// Update the BackupRestore status to SUCCESS after successful job creation
 	backupRestore.Status.Status = SUCCESS
 	if err := r.Status().Update(ctx, &backupRestore); err != nil {
 		log.Error(err, "Unable to update BackupRestore status")
