@@ -25,6 +25,7 @@ type BackupRestoreSpec struct {
 	DbSpec DatabaseSpec `json:"dbSpec"`
 	S3Spec S3Spec       `json:"s3Spec"`
 
+	// BackupRevision specifies the version or identifier of the backup.
 	BackupRevision string `json:"backupRevision"`
 }
 
