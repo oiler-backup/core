@@ -12,8 +12,8 @@
   - [Основные возможности](#основные-возможности)
   - [Архитектура](#архитектура)
   - [Установка](#установка)
-    - [Предварительные требования](#предварительные-требования)
-    - [Установка с помощью Helm](#установка-с-помощью-helm)
+    - [Требования](#требования)
+    - [Установка](#установка-1)
   - [Конфигурация](#конфигурация)
   - [Использование](#использование)
     - [Создание CRD для резервного копирования](#создание-crd-для-резервного-копирования)
@@ -58,20 +58,22 @@
 
 ## Установка
 
-### Предварительные требования
+### Требования
 
 - Kubernetes версии 1.20+.
-- Helm 3.x.
 - MinIO или другое S3-совместимое хранилище.
 
-### Установка с помощью Helm
+### Установка
 
 ```bash
-# Добавьте репозиторий Helm
-helm repo add oiler-backup https://your-repo-url
+# Перейдите в директорию с оператором
+cd core
 
-# Установите оператор
-helm install oiler-backup oiler-backup/oiler-backup --namespace oiler-system --create-namespace
+# Установите CRD в кластер Kubernetes
+make install
+
+# Установите компоненты оператора в кластер Kubernetes
+make deploy IMG=oilerbackup/core:<желаемый tag>
 ```
 
 ---
@@ -95,26 +97,81 @@ data:
 
 ## Использование
 
-### Создание CRD для резервного копирования
+### Создание CR для резервного копирования
 
-Пример YAML-файла для создания объекта `BackupRestore`:
+Пример YAML-файла для создания объекта `BackupRequest`:
+
+```yaml
+apiVersion: backup.oiler.backup/v1
+kind: BackupRequest
+metadata:
+  name: backuprequest-sample
+spec:
+  dbSpec:
+    # URL базы данных
+    uri: "database.url"
+    # Порт подключения к базе данных
+    port: 1234
+    # Пользователь базы данных
+    user: "user"
+    # Пароль от базы данных, следует использовать
+    # внешнее хранилище секретов, например Vault
+    pass: "password"
+    dbName: "dbName"
+    dbType: "dbType"
+  s3Spec:
+    # Точка доступа к s3-хранилищу
+    endpoint: "https://s3.endpoint.url"
+    bucketName: "bucketName"
+    auth:
+      # Следует использовать внешнее хранилище секретов
+      accessKey: "s3-access-key"
+      secretKey: "s3-secret-key"
+  # Cron-like формат
+  schedule: "*/1 * * * *"
+  # Ограничение на количество хранимых бэкапов
+  maxBackupCount: 1
+```
+
+Примените файл:
+
+```bash
+kubectl apply -f backuprequest.yaml
+```
+
+### Создание CR для восстановления из резервной копии
+
+Пример YAML-файла для создания объекта `BackupRequest`:
 
 ```yaml
 apiVersion: backup.oiler.backup/v1
 kind: BackupRestore
 metadata:
-  name: example-backuprestore
+  name: backuprestore-sample
 spec:
-  dbUri: "postgres-service"
-  dbPort: 5432
-  dbUser: "admin"
-  dbPass: "password"
-  dbName: "example-db"
-  databaseType: "postgres"
-  s3Endpoint: "http://minio-service:9000"
-  s3AccessKey: "minio-access-key"
-  s3SecretKey: "minio-secret-key"
-  s3BucketName: "backups"
+  dbSpec:
+    # URL базы данных
+    uri: "database.url"
+    # Порт подключения к базе данных
+    port: 1234
+    # Пользователь базы данных
+    user: "user"
+    # Пароль от базы данных, следует использовать
+    # внешнее хранилище секретов, например Vault
+    pass: "password"
+    dbName: "dbName"
+    dbType: "dbType"
+  s3Spec:
+    # Точка доступа к s3-хранилищу
+    endpoint: "https://s3.endpoint.url"
+    bucketName: "bucketName"
+    auth:
+      # Следует использовать внешнее хранилище секретов
+      accessKey: "s3-access-key"
+      secretKey: "s3-secret-key"
+  # Ревизия бэкапа
+  # Полное имя файла или относительное числовое значение
+  # (последний, предпоследний и так далее). Самый последний - "0"
   backupRevision: "0"
 ```
 
@@ -128,25 +185,22 @@ kubectl apply -f backuprestore.yaml
 
 ## Мониторинг
 
-Оператор экспортирует метрики через Prometheus. Пример запросов:
-
-- Количество успешных бэкапов:
-  ```promql
-  successful_backups_total
-  ```
-
-- Количество неудачных бэкапов:
-  ```promql
-  failed_backups_total
-  ```
-
----
+Для сбора метрик может использоваться адрес оператора с endpoint /metrics. Стандартный порт - 8443/TCP. Все доступные метрики имеют поле HELP с описанием их применения.
 
 ## Тестирование
 
 ### Unit-тесты
 
-In progress...
+Для запуска тестов выполните следующие шаги:
+
+```bash
+# Перейдите в директорию оператора
+cd core
+
+# Выполните запуск тестов
+# Возможно придётся установить дополнительные зависимости
+make test
+```
 
 ### Ручное тестирование
 
