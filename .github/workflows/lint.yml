@@ -2,8 +2,8 @@ name: Lint
 
 on:
   pull_request:
-  paths:
-    - 'core/**'
+    paths:
+      - 'core/**'
 
 jobs:
   lint:
